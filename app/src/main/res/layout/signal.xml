@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/accuracy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="accuracy"/>
+    <TextView
+        android:id="@+id/heart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="heart"/>
+    <Button
+        android:id="@+id/Resume"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Resume"/>
+    <Button
+        android:id="@+id/Pause"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pause"/>
+</LinearLayout>
