@@ -34,6 +34,7 @@ import com.google.android.youtube.player.YouTubePlayerView;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,9 +46,14 @@ import java.util.TimerTask;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.apache.http.client.methods.HttpGet;
+import org.json.JSONObject;
+
 import static android.Manifest.permission.BODY_SENSORS;
 
 public class PlayVideo extends YouTubeBaseActivity {
+    private static final int RECOVERY_REQUEST = 1;
+    public static final String API_KEY = "AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI";
     YouTubePlayerView youTubeView;
     Button btnStart, btnStop;
     YouTubePlayer.OnInitializedListener listener;
@@ -170,6 +176,11 @@ public class PlayVideo extends YouTubeBaseActivity {
         };
         youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
     }
+/*
+    public JSONObject getVideoInfo() {
+        HttpGet httpGet = new HttpGet(
+                "https://www.googleapis.com/youtube/v3/" + VIDEO_ID);
+    }*/
 
     private void addEntry(Float dataValue) {
         LineData data = lineChart.getData();
