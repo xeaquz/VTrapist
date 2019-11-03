@@ -34,6 +34,9 @@ import com.google.android.youtube.player.YouTubePlayerView;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,7 +49,14 @@ import java.util.TimerTask;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import static android.Manifest.permission.BODY_SENSORS;
@@ -67,14 +77,14 @@ public class PlayVideo extends YouTubeBaseActivity {
     Button end;
     LineChart lineChart;
 
-    Thread thread;
-
     String VIDEO_ID;
     String USER_ID;
+    String type;
     Integer videoTime = 0;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Map<Object, Object> record = new HashMap<>();
+    Map<Object, Object> session = new HashMap<>();
 
     Integer flag  = 0;
     Timer timer = new Timer();
@@ -105,6 +115,24 @@ public class PlayVideo extends YouTubeBaseActivity {
         Intent intent = getIntent();
         VIDEO_ID = intent.getExtras().getString("videoId");
         USER_ID = intent.getExtras().getString("id");
+        type = intent.getExtras().getString("type");
+
+        session.put("userId", USER_ID);
+        session.put("videoId", VIDEO_ID);
+        session.put("type", type);
+
+
+        //Get JSON data and parsing
+        new Thread() {
+            public void run() {
+                try {
+                    parsingJsonData(getVideoInfo());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.start();
+
 
         checkPermission();
 
@@ -130,6 +158,13 @@ public class PlayVideo extends YouTubeBaseActivity {
                         youTubePlayer.play();
                         SensorOnResume();
 
+                        // Get current time
+                        SimpleDateFormat fm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                        Date time = new Date();
+                        String time1 = fm.format(time);
+
+                        session.put("timeStarted", time1);
+
                         if(flag == 0) //first start
                             timer.schedule(TT, 0, 1000);
                         else //restart
@@ -148,11 +183,27 @@ public class PlayVideo extends YouTubeBaseActivity {
                 end.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        SimpleDateFormat fm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Date time = new Date();
-                        String time1 = fm.format(time);
 
-                        db.collection("users").document(USER_ID)
+                        btnStart.setEnabled(false);
+                        btnStop.setEnabled(false);
+                        end.setEnabled(false);
+
+                        session.put("timePlayed", videoTime);
+                        db.collection("sessoin")
+                                .add(session)
+                                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                                    @Override
+                                    public void onSuccess(DocumentReference documentReference) {
+
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.w("dddddd", "Error adding document", e);
+                                    }
+                                });
+                        /*db.collection("record").document(USER_ID)
                                 .update(time1, record)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
@@ -165,7 +216,7 @@ public class PlayVideo extends YouTubeBaseActivity {
                                     public void onFailure(@NonNull Exception e) {
                                         Log.w("dddddd", "Error updating document", e);
                                     }
-                                });
+                                });*/
                     }
                 });
             }
@@ -176,11 +227,51 @@ public class PlayVideo extends YouTubeBaseActivity {
         };
         youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
     }
-/*
+
     public JSONObject getVideoInfo() {
         HttpGet httpGet = new HttpGet(
-                "https://www.googleapis.com/youtube/v3/" + VIDEO_ID);
-    }*/
+                "https://www.googleapis.com/youtube/v3/videos?id=" + VIDEO_ID +
+                        "&key=AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI&part=fileDetails");
+        HttpClient client = new DefaultHttpClient();
+        HttpResponse response;
+        StringBuilder stringBuilder = new StringBuilder();
+
+        try {
+            response = client.execute(httpGet);
+            HttpEntity entity = response.getEntity();
+            InputStream stream = entity.getContent();
+            int b;
+            while((b = stream.read()) != -1) {
+                stringBuilder.append((char)b);
+            }
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject = new JSONObject(stringBuilder.toString());
+        } catch (JSONException e){
+            e.printStackTrace();
+        }
+
+        return jsonObject;
+    }
+
+    private void parsingJsonData(JSONObject jsonObject) throws JSONException {
+        JSONArray contacts = jsonObject.getJSONArray("items");
+        JSONObject c = contacts.getJSONObject(0);
+        String title = c.getJSONObject("snippet").getString("title");
+        String changString = "";
+        try {
+            changString = new String(title.getBytes("8859_1"), "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        Log.d("dddddd", title);
+    }
 
     private void addEntry(Float dataValue) {
         LineData data = lineChart.getData();

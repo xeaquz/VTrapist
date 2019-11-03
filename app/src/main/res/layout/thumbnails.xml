@@ -28,7 +28,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
             <Button
-                android:id="@+id/btnInsert"
+                android:id="@+id/btnList"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:text="insert"/>

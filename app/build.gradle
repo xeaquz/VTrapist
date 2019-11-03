@@ -20,6 +20,13 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
 }
 
 dependencies {
@@ -37,17 +44,17 @@ dependencies {
 
     //compileOnly 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
     implementation 'com.google.apis:google-api-services-youtube:v3-rev183-1.22.0'
-    /*implementation 'com.google.http-client:google-http-client-android:+'
+    implementation 'com.google.http-client:google-http-client-android:+'
     implementation 'com.google.api-client:google-api-client-android:+'
-    implementation 'com.google.api-client:google-api-client-gson:+'*/
-
+    implementation 'com.google.api-client:google-api-client-gson:+'
+/*
     implementation 'pub.devrel:easypermissions:0.3.0'
     implementation('com.google.api-client:google-api-client-android:1.22.0') {
         exclude group: 'org.apache.httpcomponents'
     }
     implementation('com.google.apis:google-api-services-youtube:v3-rev183-1.22.0') {
         exclude group: 'org.apache.httpcomponents'
-    }
+    }*/
 
     //implementation 'com.google.gms:google-services:4.3.2'
     implementation files('libs/YouTubeAndroidPlayerApi.jar')

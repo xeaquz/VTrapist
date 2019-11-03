@@ -20,7 +20,9 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.Thum
     private ArrayList<Object> mList;
     public static final String API_KEY = "AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI";
     public String VIDEO_ID = "";
-    String id;
+
+    private String id;
+    private String type;
 
     private YouTubeThumbnailView youTubeThumbnailView;
     private YouTubeThumbnailLoader youTubeThumbnailLoader;
@@ -35,14 +37,15 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.Thum
 
     public ThumbnailAdapter(){}
 
-    public ThumbnailAdapter(ArrayList<Object> list, String id){
+    public ThumbnailAdapter(ArrayList<Object> list, String id, String type){
         this.mList = list;
         this.id = id;
+        this.type = type;
     }
 
     public ThumbnailViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         View view = LayoutInflater.from(viewGroup.getContext())
-                .inflate(R.layout.recycler, viewGroup, false);
+                .inflate(R.layout.thumbnail_adapter, viewGroup, false);
         ThumbnailViewHolder viewHolder = new ThumbnailViewHolder(view);
         return viewHolder;
     }
@@ -81,6 +84,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.Thum
                 intent = new Intent(context, PlayVideo.class);
                 intent.putExtra("videoId", VIDEO_ID);
                 intent.putExtra("id", id);
+                intent.putExtra("type", type);
                 context.startActivity(intent);
                 //youTubePlayer.play();
 

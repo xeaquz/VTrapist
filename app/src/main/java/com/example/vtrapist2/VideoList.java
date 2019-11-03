@@ -45,21 +45,22 @@ public class VideoList extends YouTubeBaseActivity {
     Map<String, Object> videoData = new HashMap<>();
     String type = "";
     String id = "";
+    String VIDEO_ID;
 
-    protected void onCreate(Bundle savedInstantState){
+    protected void onCreate(Bundle savedInstantState) {
         super.onCreate(savedInstantState);
         setContentView(R.layout.thumbnails);
 
-        RecyclerView mRecyclerView = (RecyclerView)findViewById(R.id.recycler);
+        RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler);
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
 
         Intent intent = getIntent();
         id = intent.getExtras().getString("id");
-
+        type = intent.getExtras().getString("type");
         mArrayList = new ArrayList<>();
 
-        mAdapter = new ThumbnailAdapter(mArrayList, id);
+        mAdapter = new ThumbnailAdapter(mArrayList, id, type);
         mRecyclerView.setAdapter(mAdapter);
 
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mRecyclerView.getContext(),
@@ -67,7 +68,7 @@ public class VideoList extends YouTubeBaseActivity {
         mRecyclerView.addItemDecoration(dividerItemDecoration);
 
 
-        DocumentReference userRef = db.collection("users").document(id);
+        DocumentReference userRef = db.collection("user").document(id);
         userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -87,6 +88,13 @@ public class VideoList extends YouTubeBaseActivity {
                                     if (document.exists()) {
                                         Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                                         videoData = document.getData();
+
+                                        for (Map.Entry<String, Object> entry : videoData.entrySet()) {
+                                            System.out.println("key : " + entry.getKey() + " , value : " + entry.getValue());
+                                            mArrayList.add(entry.getValue());
+                                        }
+
+                                        mAdapter.notifyDataSetChanged();
                                     } else {
                                         Log.d(TAG, "No such document");
                                     }
@@ -107,17 +115,17 @@ public class VideoList extends YouTubeBaseActivity {
 
 
 
-        Button buttonInsert = (Button)findViewById(R.id.btnInsert);
+
+        Button buttonInsert = (Button) findViewById(R.id.btnList);
         buttonInsert.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                for(Map.Entry<String,Object> entry : videoData.entrySet()){
-                    System.out.println("key : " + entry.getKey() + " , value : " + entry.getValue());
-                    mArrayList.add(entry.getValue());
-                }
-                //mArrayList.add(data); // RecyclerView의 마지막 줄에 삽입
 
-                mAdapter.notifyDataSetChanged();             }
+                Intent intent = new Intent(getApplicationContext(), RecordList.class);
+                intent.putExtra("id", id);
+                intent.putExtra("type", type);
+                //startActivity(intent);
+            }
         });
     }
 }
