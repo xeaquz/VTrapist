@@ -1,4 +1,178 @@
 package com.example.vtrapist2;
 
-public class PlayRecord {
+import android.Manifest;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.android.youtube.player.YouTubeBaseActivity;
+import com.google.android.youtube.player.YouTubeInitializationResult;
+import com.google.android.youtube.player.YouTubePlayer;
+import com.google.android.youtube.player.YouTubePlayerView;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+// read signal file
+// store data to firebase
+// show graph with video
+public class PlayRecord extends YouTubeBaseActivity {
+    YouTubePlayerView youTubeView;
+    Button btnStart, btnStop;
+    YouTubePlayer.OnInitializedListener listener;
+    YouTubePlayer youTubePlayer;
+
+    TextView heart;
+    Button end;
+    LineChart lineChart;
+
+    String VIDEO_ID;
+    String USER_ID;
+    String type;
+    Integer videoTime = 0;
+
+    private static final int MY_PERMISSIONS_REQUEST_BODY_SENSORS = 1;
+
+    protected void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.play_video);
+
+        Intent intent = getIntent();
+        VIDEO_ID = intent.getExtras().getString("videoId");
+        USER_ID = intent.getExtras().getString("id");
+        type = intent.getExtras().getString("type");
+
+        File file = new File("sdcard/VTrapist/gyroY.txt");
+        FileReader fr = null;
+        char[] cbuf = new char[512];
+        int size = 0;
+
+        try {
+            fr = new FileReader(file);
+            while ((size = fr.read(cbuf)) != -1) {
+                for (int i = 0; i < size; i++) {
+                    //Log.d("dddddd", cbuf[i]);
+                    String temp = cbuf.toString();
+                }
+            }
+            fr.close();
+            String temp = cbuf.toString();
+            Log.d("dddddd", temp);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        btnStart = findViewById(R.id.youtubeBtnStart);
+        btnStop = findViewById(R.id.youtubeBtnStop);
+        youTubeView = findViewById(R.id.youtubeView);
+
+        heart=(TextView)findViewById(R.id.heart);
+        end=(Button)findViewById(R.id.End);
+        lineChart=findViewById(R.id.chart);
+
+
+        XAxis xAxis = lineChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setTextSize(10f);
+        xAxis.setDrawGridLines(false);
+
+        YAxis rightAxis = lineChart.getAxisRight();
+        rightAxis.setEnabled(false);
+
+        LineData data = new LineData();
+        lineChart.setData(data);
+
+        listener = new YouTubePlayer.OnInitializedListener() {
+            @Override
+            public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
+                youTubePlayer.cueVideo(VIDEO_ID);
+
+                btnStart.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        youTubePlayer.play();
+
+
+                    }
+                });
+                btnStop.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        youTubePlayer.pause();
+                    }
+                });
+                end.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        btnStart.setEnabled(false);
+                        btnStop.setEnabled(false);
+                        end.setEnabled(false);
+
+
+                    }
+                });
+            }
+            @Override
+            public void onInitializationFailure(YouTubePlayer.Provider provider, YouTubeInitializationResult youTubeInitializationResult) {
+                Log.d("dddddd", "fail to initialize youtube player");
+            }
+        };
+        youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
+
+    }
+
+    private void addEntry(Float dataValue) {
+        LineData data = lineChart.getData();
+        if(data != null) {
+            ILineDataSet set = data.getDataSetByIndex(0);
+
+            if(set == null) {
+                set = createSet();
+                data.addDataSet(set);
+            }
+
+            data.addEntry(new Entry(set.getEntryCount(), dataValue), 0);
+            data.notifyDataChanged();
+
+            lineChart.notifyDataSetChanged();
+            lineChart.setVisibleXRangeMaximum(10);
+            lineChart.moveViewToX(data.getEntryCount());
+        }
+    }
+
+    private LineDataSet createSet() {
+        LineDataSet set = new LineDataSet(null, "Example");
+        set.setAxisDependency(YAxis.AxisDependency.LEFT);
+        set.setColor(ColorTemplate.getHoloBlue());
+        set.setCircleColor(Color.WHITE);
+        set.setLineWidth(2f);
+        set.setFillAlpha(65);
+        set.setFillColor(ColorTemplate.getHoloBlue());
+        set.setHighLightColor(Color.rgb(244, 117, 117));
+        set.setDrawValues(false);
+        return set;
+    }
+
+
+
 }

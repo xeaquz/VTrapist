@@ -147,14 +147,14 @@ public class PlayVideo extends YouTubeBaseActivity {
         LineData data = new LineData();
         lineChart.setData(data);
 
-        listener = new YouTubePlayer.OnInitializedListener() {
-            @Override
-            public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
-                youTubePlayer.cueVideo(VIDEO_ID);
+                    listener = new YouTubePlayer.OnInitializedListener() {
+                        @Override
+                        public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
+                            youTubePlayer.cueVideo(VIDEO_ID);
 
-                btnStart.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
+                            btnStart.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
                         youTubePlayer.play();
                         SensorOnResume();
 
@@ -274,7 +274,7 @@ public class PlayVideo extends YouTubeBaseActivity {
     }
 
     private void addEntry(Float dataValue) {
-        LineData data = lineChart.getData();
+            LineData data = lineChart.getData();
         if(data != null) {
             ILineDataSet set = data.getDataSetByIndex(0);
 
