@@ -31,15 +31,27 @@ import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -64,10 +76,13 @@ import static android.Manifest.permission.BODY_SENSORS;
 public class PlayVideo extends YouTubeBaseActivity {
     private static final int RECOVERY_REQUEST = 1;
     public static final String API_KEY = "AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI";
+
     YouTubePlayerView youTubeView;
     Button btnStart, btnStop;
     YouTubePlayer.OnInitializedListener listener;
     YouTubePlayer youTubePlayer;
+
+
     SensorManager mSensorManager;
     Sensor mHeartRate; // HeartRate 센서
     // 장치를 터치하는 사람의 현재 heart rate를 기록하는 센서
@@ -85,8 +100,11 @@ public class PlayVideo extends YouTubeBaseActivity {
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Map<Object, Object> record = new HashMap<>();
     Map<Object, Object> session = new HashMap<>();
+    Map<String, Object> signal = new HashMap<>();
+    String recordId;
+    String sessionId;
 
-    Integer flag  = 0;
+    Integer flag = 0;
     Timer timer = new Timer();
     TimerTask TT = new TimerTask() {
         @Override
@@ -105,12 +123,12 @@ public class PlayVideo extends YouTubeBaseActivity {
         btnStop = findViewById(R.id.youtubeBtnStop);
         youTubeView = findViewById(R.id.youtubeView);
 
-        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         heartLs = new heartListener();
 
-        heart=(TextView)findViewById(R.id.heart);
-        end=(Button)findViewById(R.id.End);
-        lineChart=findViewById(R.id.chart);
+        heart = (TextView) findViewById(R.id.heart);
+        end = (Button) findViewById(R.id.End);
+        lineChart = findViewById(R.id.chart);
 
         Intent intent = getIntent();
         VIDEO_ID = intent.getExtras().getString("videoId");
@@ -133,6 +151,52 @@ public class PlayVideo extends YouTubeBaseActivity {
             }
         }.start();
 
+        String sData = "";
+        try{
+            BufferedReader br = new BufferedReader(new FileReader(getFilesDir()+"test.txt"));
+            String readStr = "";
+            String str = null;
+            while(((str = br.readLine()) != null)){
+                readStr += str +"\n";
+            }
+            sData = readStr;
+            br.close();
+
+            Toast.makeText(this, readStr.substring(0, readStr.length()-1), Toast.LENGTH_SHORT).show();
+
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+            Toast.makeText(this, "File not Found", Toast.LENGTH_SHORT).show();
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // split data to array
+        sData = sData.substring(1, sData.lastIndexOf("]"));
+        String[] splitData = sData.split(",");
+        int len = splitData.length;
+
+        for (int i = 0; i < len; i++) {
+            signal.put(Integer.toString(i), splitData[i]);
+        }
+
+        record.put("signal", signal);
+        db.collection("gyro")
+                .add(record)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        Log.d("dddddd", "PlayRecord DocumentSnapshot added with ID: " + documentReference.getId());
+                        recordId = documentReference.getId();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("dddddd", "PlayRecord Error adding document", e);
+                    }
+                });
+
 
         checkPermission();
 
@@ -147,14 +211,14 @@ public class PlayVideo extends YouTubeBaseActivity {
         LineData data = new LineData();
         lineChart.setData(data);
 
-                    listener = new YouTubePlayer.OnInitializedListener() {
-                        @Override
-                        public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
-                            youTubePlayer.cueVideo(VIDEO_ID);
+        listener = new YouTubePlayer.OnInitializedListener() {
+            @Override
+            public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
+                youTubePlayer.cueVideo(VIDEO_ID);
 
-                            btnStart.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
+                btnStart.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
                         youTubePlayer.play();
                         SensorOnResume();
 
@@ -165,7 +229,7 @@ public class PlayVideo extends YouTubeBaseActivity {
 
                         session.put("timeStarted", time1);
 
-                        if(flag == 0) //first start
+                        if (flag == 0) //first start
                             timer.schedule(TT, 0, 1000);
                         else //restart
                             tempTask();
@@ -189,12 +253,13 @@ public class PlayVideo extends YouTubeBaseActivity {
                         end.setEnabled(false);
 
                         session.put("timePlayed", videoTime);
+                        session.put("gyroId", recordId);
                         db.collection("sessoin")
                                 .add(session)
                                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                                     @Override
                                     public void onSuccess(DocumentReference documentReference) {
-
+                                        sessionId = documentReference.getId();
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -203,8 +268,9 @@ public class PlayVideo extends YouTubeBaseActivity {
                                         Log.w("dddddd", "Error adding document", e);
                                     }
                                 });
-                        /*db.collection("record").document(USER_ID)
-                                .update(time1, record)
+
+                        db.collection("record").document(sessionId)
+                                .update("sessionId", sessionId)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
@@ -216,10 +282,11 @@ public class PlayVideo extends YouTubeBaseActivity {
                                     public void onFailure(@NonNull Exception e) {
                                         Log.w("dddddd", "Error updating document", e);
                                     }
-                                });*/
+                                });
                     }
                 });
             }
+
             @Override
             public void onInitializationFailure(YouTubePlayer.Provider provider, YouTubeInitializationResult youTubeInitializationResult) {
                 Log.d("dddddd", "fail to initialize youtube player");
@@ -228,10 +295,11 @@ public class PlayVideo extends YouTubeBaseActivity {
         youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
     }
 
+
     public JSONObject getVideoInfo() {
         HttpGet httpGet = new HttpGet(
                 "https://www.googleapis.com/youtube/v3/videos?id=" + VIDEO_ID +
-                        "&key=AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI&part=fileDetails");
+                        "&key=AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI&part=snippet");
         HttpClient client = new DefaultHttpClient();
         HttpResponse response;
         StringBuilder stringBuilder = new StringBuilder();
@@ -241,8 +309,8 @@ public class PlayVideo extends YouTubeBaseActivity {
             HttpEntity entity = response.getEntity();
             InputStream stream = entity.getContent();
             int b;
-            while((b = stream.read()) != -1) {
-                stringBuilder.append((char)b);
+            while ((b = stream.read()) != -1) {
+                stringBuilder.append((char) b);
             }
         } catch (ClientProtocolException e) {
             e.printStackTrace();
@@ -253,7 +321,7 @@ public class PlayVideo extends YouTubeBaseActivity {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject = new JSONObject(stringBuilder.toString());
-        } catch (JSONException e){
+        } catch (JSONException e) {
             e.printStackTrace();
         }
 
@@ -263,7 +331,7 @@ public class PlayVideo extends YouTubeBaseActivity {
     private void parsingJsonData(JSONObject jsonObject) throws JSONException {
         JSONArray contacts = jsonObject.getJSONArray("items");
         JSONObject c = contacts.getJSONObject(0);
-        String title = c.getJSONObject("snippet").getString("title");
+        String title = c.getJSONObject("snippet").getJSONObject("thumbnails").getJSONObject("default").getString("url");
         String changString = "";
         try {
             changString = new String(title.getBytes("8859_1"), "utf-8");
@@ -274,11 +342,11 @@ public class PlayVideo extends YouTubeBaseActivity {
     }
 
     private void addEntry(Float dataValue) {
-            LineData data = lineChart.getData();
-        if(data != null) {
+        LineData data = lineChart.getData();
+        if (data != null) {
             ILineDataSet set = data.getDataSetByIndex(0);
 
-            if(set == null) {
+            if (set == null) {
                 set = createSet();
                 data.addDataSet(set);
             }
@@ -335,11 +403,10 @@ public class PlayVideo extends YouTubeBaseActivity {
 // getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
 // heart rate monitor 얻어오기
 // android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
-            if(mHeartRate == null) {
-                Toast.makeText(this, "No Heart Rate Sensor",Toast.LENGTH_SHORT).show();
-            }
-            else {
-                Toast.makeText(this,"Yes Heart Rate Sensor",Toast.LENGTH_SHORT).show();
+            if (mHeartRate == null) {
+                Toast.makeText(this, "No Heart Rate Sensor", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Yes Heart Rate Sensor", Toast.LENGTH_SHORT).show();
             }
             //SensorOnResume();
         }
@@ -356,11 +423,10 @@ public class PlayVideo extends YouTubeBaseActivity {
 // getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
 // heart rate monitor 얻어오기
 // android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
-                    if(mHeartRate == null) {
-                        Toast.makeText(this,"No Heart Rate Sensor",Toast.LENGTH_SHORT).show();
-                    }
-                    else{
-                        Toast.makeText(this,"Yes Heart Rate Sensor",Toast.LENGTH_SHORT).show();
+                    if (mHeartRate == null) {
+                        Toast.makeText(this, "No Heart Rate Sensor", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this, "Yes Heart Rate Sensor", Toast.LENGTH_SHORT).show();
                     }
                     //SensorOnResume();
 // permission was granted, yay! do the
@@ -374,37 +440,41 @@ public class PlayVideo extends YouTubeBaseActivity {
                 break;
         }
     }
+
     protected void SensorOnResume() {
         //super.onResume(); // 시작
-        if(mSensorManager.registerListener(heartLs,mHeartRate,
-                SensorManager.SENSOR_DELAY_UI)){
-            Toast.makeText(this,"Register Listener",Toast.LENGTH_SHORT).show();
+        if (mSensorManager.registerListener(heartLs, mHeartRate,
+                SensorManager.SENSOR_DELAY_UI)) {
+            Toast.makeText(this, "Register Listener", Toast.LENGTH_SHORT).show();
         }
 // 지정된 Sampling 주파수에서 특정 sensor에 대해 SensorEventListener 등록
 // ~ FASTEST - 최대한 빠르게
 // ~ GAME - 게임에 적합한 속도
 // ~ UI - UI 수정에 적합한 속도
 // ~ NORMAL - 화면 방향 변화를 모니터링 하기에 적합한 속도
-        Toast.makeText(this,"Heart Rate Sensor Resume...",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Heart Rate Sensor Resume...", Toast.LENGTH_SHORT).show();
     }
+
     protected void SensorOnPause() {
         //super.onPause(); // 멈추기
         mSensorManager.unregisterListener(heartLs); // 등록한 listener 해제
-        Toast.makeText(this,"Heart Rate Sensor Paused...",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Heart Rate Sensor Paused...", Toast.LENGTH_SHORT).show();
     }
+
     private class heartListener implements SensorEventListener {
         // 센서 값이 변할 때 이벤트 발생
 // 센서 하나만 이용하므로 values[0]
 // 여러 개의 센서 이용시 values[0~n]
-        public void onSensorChanged(SensorEvent event){
+        public void onSensorChanged(SensorEvent event) {
             float value = event.values[0];
             Log.d("dddddd", Integer.toString(videoTime));
 
             record.put(Integer.toString(videoTime), value);
             addEntry(value);
 
-            heart.setText(heart.getText().toString() + String.format("%.2f",value));
+            heart.setText(heart.getText().toString() + String.format("%.2f", value));
         }
+
         public void onAccuracyChanged(Sensor sensor, int accuracy) {
         }
     }

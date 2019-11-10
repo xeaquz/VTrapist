@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -27,6 +28,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -62,6 +67,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
 
         typeList = new ArrayList<>();
         typeList.add("height");
@@ -112,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
         editTxt_age = findViewById(R.id.editTxt_age);
         editTxt_gender = findViewById(R.id.editTxt_gender);
         editTxt_medical = findViewById(R.id.editTxt_medical);
-
 
 
         btnGo.setOnClickListener(new View.OnClickListener() {

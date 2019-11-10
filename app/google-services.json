@@ -15,11 +15,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "108318511613-b8unlbti4eecmpj6vv81jr4mifvoflb4.apps.googleusercontent.com",
+          "client_id": "108318511613-b2dpc5h7b8b330ac23l56sd6lose2goo.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.vtrapist2",
-            "certificate_hash": "d3a67fde232bdf32e9b903e0bb7fe4964d4b9f98"
+            "certificate_hash": "3865b368f6dbb24154fe036fd23a3c74c2924fde"
           }
         },
         {
