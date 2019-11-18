@@ -68,9 +68,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
-
         typeList = new ArrayList<>();
         typeList.add("height");
         typeList.add("spider");

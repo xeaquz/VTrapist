@@ -64,15 +64,11 @@ public class PlayRecord extends YouTubeBaseActivity {
     String USER_ID;
     String type;
     Integer videoTime = 0;
+    String[] splitData;
 
     Integer flag = 0;
     Timer timer = new Timer();
-    TimerTask TT = new TimerTask() {
-        @Override
-        public void run() {
-            videoTime++;
-        }
-    };
+
 
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -82,7 +78,7 @@ public class PlayRecord extends YouTubeBaseActivity {
         VIDEO_ID = intent.getExtras().getString("videoId");
         USER_ID = intent.getExtras().getString("id");
         type = intent.getExtras().getString("type");
-/*\
+/*
         // write file
         try{
             BufferedWriter bw = new BufferedWriter(new FileWriter(getFilesDir() + "test.txt", true));
@@ -93,8 +89,8 @@ public class PlayRecord extends YouTubeBaseActivity {
         }catch (Exception e){
             e.printStackTrace();
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-*/
+        }*/
+
         // read file
         String sData = "";
         try{
@@ -118,12 +114,20 @@ public class PlayRecord extends YouTubeBaseActivity {
 
         // split data to array
         sData = sData.substring(1, sData.lastIndexOf("]"));
-        String[] splitData = sData.split(",");
+        splitData = sData.split(",");
         int len = splitData.length;
 
         for (int i = 0; i < len; i++) {
             signal.put(Integer.toString(i), splitData[i]);
         }
+
+        TimerTask TT = new TimerTask() {
+            @Override
+            public void run() {
+                videoTime++;
+                addEntry(Float.parseFloat(splitData[videoTime]));
+            }
+        };
 
         record.put("signal", signal);
 
@@ -211,6 +215,7 @@ public class PlayRecord extends YouTubeBaseActivity {
             @Override
             public void run() {
                 videoTime++;
+                addEntry(Float.parseFloat(splitData[videoTime]));
                 //todo
             }
         };
