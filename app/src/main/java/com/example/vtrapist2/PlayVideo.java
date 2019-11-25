@@ -9,6 +9,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -41,6 +42,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -101,8 +103,8 @@ public class PlayVideo extends YouTubeBaseActivity {
     Map<Object, Object> record = new HashMap<>();
     Map<Object, Object> session = new HashMap<>();
     Map<String, Object> signal = new HashMap<>();
-    String recordId;
     String sessionId;
+    String accelId;
 
     Integer flag = 0;
     Timer timer = new Timer();
@@ -150,53 +152,6 @@ public class PlayVideo extends YouTubeBaseActivity {
                 }
             }
         }.start();
-
-        String sData = "";
-        try{
-            BufferedReader br = new BufferedReader(new FileReader(getFilesDir()+"test.txt"));
-            String readStr = "";
-            String str = null;
-            while(((str = br.readLine()) != null)){
-                readStr += str +"\n";
-            }
-            sData = readStr;
-            br.close();
-
-            Toast.makeText(this, readStr.substring(0, readStr.length()-1), Toast.LENGTH_SHORT).show();
-
-        }catch (FileNotFoundException e){
-            e.printStackTrace();
-            Toast.makeText(this, "File not Found", Toast.LENGTH_SHORT).show();
-        }catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // split data to array
-        sData = sData.substring(1, sData.lastIndexOf("]"));
-        String[] splitData = sData.split(",");
-        int len = splitData.length;
-
-        for (int i = 0; i < len; i++) {
-            signal.put(Integer.toString(i), splitData[i]);
-        }
-
-        record.put("signal", signal);
-        db.collection("gyro")
-                .add(record)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d("dddddd", "PlayRecord DocumentSnapshot added with ID: " + documentReference.getId());
-                        recordId = documentReference.getId();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("dddddd", "PlayRecord Error adding document", e);
-                    }
-                });
-
 
         checkPermission();
 
@@ -252,8 +207,39 @@ public class PlayVideo extends YouTubeBaseActivity {
                         btnStop.setEnabled(false);
                         end.setEnabled(false);
 
+                        String sData = readFile();
+
+                        // split data to array
+                        sData = sData.substring(1, sData.lastIndexOf("]"));
+                        String[] splitData = sData.split(",");
+                        int len = splitData.length;
+
+                        for (int i = 0; i < len; i++) {
+                            signal.put(Integer.toString(i), splitData[i]);
+                        }
+
+                        // put signal
+                        record.put("signal", signal);
+                        record.put("sessionId", "");
+                        db.collection("accel")
+                                .add(record)
+                                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                                    @Override
+                                    public void onSuccess(DocumentReference documentReference) {
+                                        Log.d("dddddd", "PlayVideo DocumentSnapshot added with ID: " + documentReference.getId());
+                                        accelId = documentReference.getId();
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.w("dddddd", "PlayVideo Error adding document", e);
+                                    }
+                                });
+
+                        // put session
                         session.put("timePlayed", videoTime);
-                        session.put("gyroId", recordId);
+                        session.put("accelId", accelId);
                         db.collection("sessoin")
                                 .add(session)
                                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -269,7 +255,12 @@ public class PlayVideo extends YouTubeBaseActivity {
                                     }
                                 });
 
-                        db.collection("record").document(sessionId)
+<<<<<<< HEAD
+                        // update session id of signal collection
+                        db.collection("accel").document(accelId)
+=======
+                        db.collection("gyro").document(sessionId)
+>>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
                                 .update("sessionId", sessionId)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
@@ -295,7 +286,32 @@ public class PlayVideo extends YouTubeBaseActivity {
         youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
     }
 
+    public String readFile() {
+        StringBuffer data = new StringBuffer();
 
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+            try {
+                File f = new File(path, "heart.txt");
+                BufferedReader buffer = new BufferedReader(new FileReader(f));
+                String str = buffer.readLine();
+                while (str != null) {
+                    data.append(str);
+                    str = buffer.readLine();
+                }
+                buffer.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.d("dddddd", data.toString());
+        }
+        return data.toString();
+
+    }
+
+    //json----------------------------------------------------------------------------------------
     public JSONObject getVideoInfo() {
         HttpGet httpGet = new HttpGet(
                 "https://www.googleapis.com/youtube/v3/videos?id=" + VIDEO_ID +
@@ -341,6 +357,8 @@ public class PlayVideo extends YouTubeBaseActivity {
         Log.d("dddddd", title);
     }
 
+    //chart----------------------------------------------------------------------------------------
+    // add value to chart
     private void addEntry(Float dataValue) {
         LineData data = lineChart.getData();
         if (data != null) {
@@ -373,6 +391,7 @@ public class PlayVideo extends YouTubeBaseActivity {
         return set;
     }
 
+    // using when restart timer
     public void tempTask() {
         TimerTask task = new TimerTask() {
             @Override
@@ -385,24 +404,24 @@ public class PlayVideo extends YouTubeBaseActivity {
         timer.schedule(task, 0, 1000);
     }
 
+
+    //sensor----------------------------------------------------------------------------------------
     private void checkPermission() {
         if (checkSelfPermission(BODY_SENSORS)
                 != PackageManager.PERMISSION_GRANTED) {
-// Should we show an explanation?
             if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-// Explain to the user why we need to write the permission.
                 Toast.makeText(this, "BODY_SENSORS", Toast.LENGTH_SHORT).show();
             }
             requestPermissions(new String[]{BODY_SENSORS},
                     MY_PERMISSIONS_REQUEST_BODY_SENSORS);
-// MY_PERMISSION_REQUEST_STORAGE is an
-// app-defined int constant
+            // MY_PERMISSION_REQUEST_STORAGE is an
+            // app-defined int constant
         } else {
-// 다음 부분은 항상 허용일 경우에 해당이 됩니다.
+            // 다음 부분은 항상 허용일 경우에 해당이 됩니다.
             mHeartRate = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-// getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
-// heart rate monitor 얻어오기
-// android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
+            // getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
+            // heart rate monitor 얻어오기
+            // android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
             if (mHeartRate == null) {
                 Toast.makeText(this, "No Heart Rate Sensor", Toast.LENGTH_SHORT).show();
             } else {
@@ -420,22 +439,21 @@ public class PlayVideo extends YouTubeBaseActivity {
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(this, "BODY_SENSORS Granted", Toast.LENGTH_SHORT).show();
                     mHeartRate = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-// getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
-// heart rate monitor 얻어오기
-// android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
+                    // getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
+                    // heart rate monitor 얻어오기
+                    // android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
                     if (mHeartRate == null) {
                         Toast.makeText(this, "No Heart Rate Sensor", Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(this, "Yes Heart Rate Sensor", Toast.LENGTH_SHORT).show();
                     }
                     //SensorOnResume();
-// permission was granted, yay! do the
-// calendar task you need to do.
+                // permission was granted
 
                 } else {
 
-// permission denied, boo! Disable the
-// functionality that depends on this permission.
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
                 }
                 break;
         }
@@ -447,11 +465,6 @@ public class PlayVideo extends YouTubeBaseActivity {
                 SensorManager.SENSOR_DELAY_UI)) {
             Toast.makeText(this, "Register Listener", Toast.LENGTH_SHORT).show();
         }
-// 지정된 Sampling 주파수에서 특정 sensor에 대해 SensorEventListener 등록
-// ~ FASTEST - 최대한 빠르게
-// ~ GAME - 게임에 적합한 속도
-// ~ UI - UI 수정에 적합한 속도
-// ~ NORMAL - 화면 방향 변화를 모니터링 하기에 적합한 속도
         Toast.makeText(this, "Heart Rate Sensor Resume...", Toast.LENGTH_SHORT).show();
     }
 
@@ -463,13 +476,13 @@ public class PlayVideo extends YouTubeBaseActivity {
 
     private class heartListener implements SensorEventListener {
         // 센서 값이 변할 때 이벤트 발생
-// 센서 하나만 이용하므로 values[0]
-// 여러 개의 센서 이용시 values[0~n]
+        // 센서 하나만 이용하므로 values[0]
+        // 여러 개의 센서 이용시 values[0~n]
         public void onSensorChanged(SensorEvent event) {
             float value = event.values[0];
             Log.d("dddddd", Integer.toString(videoTime));
 
-            record.put(Integer.toString(videoTime), value);
+            //record.put(Integer.toString(videoTime), value);
             addEntry(value);
 
             heart.setText(heart.getText().toString() + String.format("%.2f", value));

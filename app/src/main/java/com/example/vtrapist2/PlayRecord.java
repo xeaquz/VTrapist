@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,14 +21,21 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -42,6 +50,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static android.content.ContentValues.TAG;
+
 // read signal file
 // store data to firebase
 // show graph with video
@@ -50,6 +60,9 @@ public class PlayRecord extends YouTubeBaseActivity {
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Map<String, Object> signal = new HashMap<>();
     Map<String, Object> record = new HashMap<>();
+    Map<String, Object> data = new HashMap<>();
+
+    SessionInfo sessionInfo;
 
     YouTubePlayerView youTubeView;
     Button btnStart, btnStop;
@@ -62,12 +75,18 @@ public class PlayRecord extends YouTubeBaseActivity {
 
     String VIDEO_ID;
     String USER_ID;
+    int VIDEO_TIME;
     String type;
-    Integer videoTime = 0;
+    int videoTime = 0;
     String[] splitData;
+    double samplingRate = 50.0;
+    int signalCnt = 0;
 
-    Integer flag = 0;
+    int flag = 0;
     Timer timer = new Timer();
+    float cnt = 0;
+    int len;
+    float samplingRate;
 
 
     protected void onCreate(Bundle savedInstanceState){
@@ -78,6 +97,9 @@ public class PlayRecord extends YouTubeBaseActivity {
         VIDEO_ID = intent.getExtras().getString("videoId");
         USER_ID = intent.getExtras().getString("id");
         type = intent.getExtras().getString("type");
+<<<<<<< HEAD
+=======
+
 /*
         // write file
         try{
@@ -102,33 +124,32 @@ public class PlayRecord extends YouTubeBaseActivity {
             }
             sData = readStr;
             br.close();
+>>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
 
-            Toast.makeText(this, readStr.substring(0, readStr.length()-1), Toast.LENGTH_SHORT).show();
+        VIDEO_ID = "PSKEmWhjqVU";
+        VIDEO_TIME = 180;
 
-        }catch (FileNotFoundException e){
+<<<<<<< HEAD
+        String sData = readFile();
+=======
+        } catch (FileNotFoundException e){
             e.printStackTrace();
             Toast.makeText(this, "File not Found", Toast.LENGTH_SHORT).show();
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
+>>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
 
         // split data to array
         sData = sData.substring(1, sData.lastIndexOf("]"));
         splitData = sData.split(",");
-        int len = splitData.length;
+        len = splitData.length;
+        samplingRate = (float)len/(float)VIDEO_TIME;
+        Log.d("dddddd", Float.toString(samplingRate));
 
-        for (int i = 0; i < len; i++) {
-            signal.put(Integer.toString(i), splitData[i]);
-        }
-
-        TimerTask TT = new TimerTask() {
-            @Override
-            public void run() {
-                videoTime++;
-                addEntry(Float.parseFloat(splitData[videoTime]));
-            }
-        };
-
+<<<<<<< HEAD
+        //getSignalData();
+=======
         record.put("signal", signal);
 
         db.collection("gyro")
@@ -147,7 +168,29 @@ public class PlayRecord extends YouTubeBaseActivity {
                     }
                 });
 
+>>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
+        TimerTask TT = new TimerTask() {
+            @Override
+            public void run() {
+                videoTime++;
+<<<<<<< HEAD
+                cnt+=samplingRate;
+                Log.d("dddddd", Integer.toString(videoTime));
+                Log.d("dddddd", Float.toString(cnt));
+                if (videoTime < VIDEO_TIME-5) {
+                    addEntry(Float.parseFloat(splitData[(int) cnt]));
+                }
+            }
+        };
 
+=======
+                signalCnt += (int)samplingRate;
+                addEntry(Float.parseFloat(splitData[videoTime]));
+            }
+        };
+
+
+>>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
         btnStart = findViewById(R.id.youtubeBtnStart);
         btnStop = findViewById(R.id.youtubeBtnStop);
         youTubeView = findViewById(R.id.youtubeView);
@@ -167,7 +210,6 @@ public class PlayRecord extends YouTubeBaseActivity {
 
         LineData data = new LineData();
         lineChart.setData(data);
-
         listener = new YouTubePlayer.OnInitializedListener() {
             @Override
             public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
@@ -210,13 +252,74 @@ public class PlayRecord extends YouTubeBaseActivity {
 
     }
 
+    public void getSignalData() {
+        db.collection("session")
+                .whereEqualTo("userId", USER_ID)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Log.d(TAG, document.getId() + " => " + document.getData());
+                                sessionInfo = document.toObject(SessionInfo.class);
+
+                                db.collection("accel").document(sessionInfo.accelId)
+                                        .get()
+                                        .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                            @Override
+                                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                                DocumentSnapshot document = task.getResult();
+                                                signal = document.getData();
+                                                Log.d("dddddd", signal.toString());
+                                            }
+                                        });
+                        }
+                        } else {
+                            Log.d(TAG, "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
+
+
+    }
+
+    public String readFile() {
+        StringBuffer data = new StringBuffer();
+
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+            try {
+                File f = new File(path, "gyroY.txt");
+                BufferedReader buffer = new BufferedReader(new FileReader(f));
+                String str = buffer.readLine();
+                while (str != null) {
+                    data.append(str);
+                    str = buffer.readLine();
+                }
+                buffer.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            Log.d("dddddd", data.toString());
+        }
+        return data.toString();
+
+    }
+
     public void tempTask() {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
                 videoTime++;
-                addEntry(Float.parseFloat(splitData[videoTime]));
-                //todo
+                cnt+=samplingRate;
+                Log.d("dddddd", Integer.toString(videoTime));
+                Log.d("dddddd", Float.toString(cnt));
+                if (videoTime < VIDEO_TIME-5) {
+                    addEntry(Float.parseFloat(splitData[(int) cnt]));
+                }
             }
         };
         timer = new Timer();
