@@ -269,7 +269,7 @@ public class PlayVideo extends YouTubeBaseActivity {
                                     }
                                 });
 
-                        db.collection("gyro").document(sessionId)
+                        db.collection("record").document(sessionId)
                                 .update("sessionId", sessionId)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override

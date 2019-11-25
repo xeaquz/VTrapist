@@ -63,10 +63,8 @@ public class PlayRecord extends YouTubeBaseActivity {
     String VIDEO_ID;
     String USER_ID;
     String type;
-    int videoTime = 0;
+    Integer videoTime = 0;
     String[] splitData;
-    double samplingRate = 50.0;
-    int signalCnt = 0;
 
     Integer flag = 0;
     Timer timer = new Timer();
@@ -80,7 +78,6 @@ public class PlayRecord extends YouTubeBaseActivity {
         VIDEO_ID = intent.getExtras().getString("videoId");
         USER_ID = intent.getExtras().getString("id");
         type = intent.getExtras().getString("type");
-
 /*
         // write file
         try{
@@ -108,10 +105,10 @@ public class PlayRecord extends YouTubeBaseActivity {
 
             Toast.makeText(this, readStr.substring(0, readStr.length()-1), Toast.LENGTH_SHORT).show();
 
-        } catch (FileNotFoundException e){
+        }catch (FileNotFoundException e){
             e.printStackTrace();
             Toast.makeText(this, "File not Found", Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
+        }catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -123,6 +120,14 @@ public class PlayRecord extends YouTubeBaseActivity {
         for (int i = 0; i < len; i++) {
             signal.put(Integer.toString(i), splitData[i]);
         }
+
+        TimerTask TT = new TimerTask() {
+            @Override
+            public void run() {
+                videoTime++;
+                addEntry(Float.parseFloat(splitData[videoTime]));
+            }
+        };
 
         record.put("signal", signal);
 
@@ -141,15 +146,6 @@ public class PlayRecord extends YouTubeBaseActivity {
                         Log.w("dddddd", "PlayRecord Error adding document", e);
                     }
                 });
-
-        TimerTask TT = new TimerTask() {
-            @Override
-            public void run() {
-                videoTime++;
-                signalCnt += (int)samplingRate;
-                addEntry(Float.parseFloat(splitData[videoTime]));
-            }
-        };
 
 
         btnStart = findViewById(R.id.youtubeBtnStart);
