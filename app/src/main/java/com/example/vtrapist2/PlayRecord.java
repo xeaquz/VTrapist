@@ -79,7 +79,6 @@ public class PlayRecord extends YouTubeBaseActivity {
     String type;
     int videoTime = 0;
     String[] splitData;
-    double samplingRate = 50.0;
     int signalCnt = 0;
 
     int flag = 0;
@@ -97,48 +96,12 @@ public class PlayRecord extends YouTubeBaseActivity {
         VIDEO_ID = intent.getExtras().getString("videoId");
         USER_ID = intent.getExtras().getString("id");
         type = intent.getExtras().getString("type");
-<<<<<<< HEAD
-=======
-
-/*
-        // write file
-        try{
-            BufferedWriter bw = new BufferedWriter(new FileWriter(getFilesDir() + "test.txt", true));
-            bw.write("[0.096954346, 0.2336731, 0.49803162, 0.5968323, 0.56051636, 0.83929443, 1.3210144, 1.5901794, 1.8230286, 2.124771, 2.1680298, 1.4037933, 0.82380676, 0.5792084, 0.3079071, 0.085739136, -0.03816223, -0.073410034, -0.104385376, -0.1695404, -0.15992737, -0.19036865, -0.0953064, 0.014709473, 0.11457825, 0.03553772, -0.104385376, -0.24377441, -0.39491272, -0.6208191, -1.1906586, -1.6184387, -1.8379364, -2.0221863, -2.398697, -2.7784119, -2.7266083, -1.8048248]\n");
-            bw.close();
-
-            Toast.makeText(this,"저장완료", Toast.LENGTH_SHORT).show();
-        }catch (Exception e){
-            e.printStackTrace();
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-        }*/
-
-        // read file
-        String sData = "";
-        try{
-            BufferedReader br = new BufferedReader(new FileReader(getFilesDir()+"test.txt"));
-            String readStr = "";
-            String str = null;
-            while(((str = br.readLine()) != null)){
-                readStr += str +"\n";
-            }
-            sData = readStr;
-            br.close();
->>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
 
         VIDEO_ID = "PSKEmWhjqVU";
         VIDEO_TIME = 180;
 
-<<<<<<< HEAD
         String sData = readFile();
-=======
-        } catch (FileNotFoundException e){
-            e.printStackTrace();
-            Toast.makeText(this, "File not Found", Toast.LENGTH_SHORT).show();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
->>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
+
 
         // split data to array
         sData = sData.substring(1, sData.lastIndexOf("]"));
@@ -147,9 +110,7 @@ public class PlayRecord extends YouTubeBaseActivity {
         samplingRate = (float)len/(float)VIDEO_TIME;
         Log.d("dddddd", Float.toString(samplingRate));
 
-<<<<<<< HEAD
         //getSignalData();
-=======
         record.put("signal", signal);
 
         db.collection("gyro")
@@ -168,12 +129,10 @@ public class PlayRecord extends YouTubeBaseActivity {
                     }
                 });
 
->>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
         TimerTask TT = new TimerTask() {
             @Override
             public void run() {
                 videoTime++;
-<<<<<<< HEAD
                 cnt+=samplingRate;
                 Log.d("dddddd", Integer.toString(videoTime));
                 Log.d("dddddd", Float.toString(cnt));
@@ -183,14 +142,7 @@ public class PlayRecord extends YouTubeBaseActivity {
             }
         };
 
-=======
-                signalCnt += (int)samplingRate;
-                addEntry(Float.parseFloat(splitData[videoTime]));
-            }
-        };
 
-
->>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
         btnStart = findViewById(R.id.youtubeBtnStart);
         btnStop = findViewById(R.id.youtubeBtnStop);
         youTubeView = findViewById(R.id.youtubeView);

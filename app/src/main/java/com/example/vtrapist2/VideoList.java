@@ -122,7 +122,7 @@ public class VideoList extends YouTubeBaseActivity {
             @Override
             public void onClick(View v) {
 
-                Intent intent = new Intent(getApplicationContext(), PlayRecord.class);
+                Intent intent = new Intent(getApplicationContext(), RecordList.class);
                 intent.putExtra("id", id);
                 intent.putExtra("type", type);
                 intent.putExtra("videoId", VIDEO_ID);

@@ -255,12 +255,8 @@ public class PlayVideo extends YouTubeBaseActivity {
                                     }
                                 });
 
-<<<<<<< HEAD
                         // update session id of signal collection
                         db.collection("accel").document(accelId)
-=======
-                        db.collection("gyro").document(sessionId)
->>>>>>> debc606e6b37d85429a306b00f6a988a63c0ddd2
                                 .update("sessionId", sessionId)
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
@@ -294,7 +290,7 @@ public class PlayVideo extends YouTubeBaseActivity {
             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 
             try {
-                File f = new File(path, "heart.txt");
+                File f = new File(path, "accelY.txt");
                 BufferedReader buffer = new BufferedReader(new FileReader(f));
                 String str = buffer.readLine();
                 while (str != null) {
