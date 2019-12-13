@@ -1,20 +1,29 @@
 package com.example.vtrapist2;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class SessionInfo {
 
     public String userId;
     public String videoId;
-    public String gyroId;
+    public int timePlayed;
+    public String timeStarted;
     public String accelId;
     public String heartId;
-    public String phobia;
+    public String gyroId;
+    public String type;
+    public float samplingRate_a;
 
-    public SessionInfo(String userId, String videoId, String gyroId, String accelId, String heartId, String phobia) {
+    public SessionInfo(){}
+    public SessionInfo(String userId, String videoId, String timeStarted, int timePlayed, String accelId, String type, float samplingRate_a) {
         this.userId = userId;
         this.videoId = videoId;
-        this.gyroId = gyroId;
+        this.timeStarted = timeStarted;
+        this.timePlayed = timePlayed;
         this.accelId = accelId;
-        this.heartId = heartId;
-        this.phobia = phobia;
+        this.type = type;
+        this.samplingRate_a = samplingRate_a;
     }
+
 }

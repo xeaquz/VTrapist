@@ -117,15 +117,12 @@ public class VideoList extends YouTubeBaseActivity {
 
 
         Button buttonInsert = (Button) findViewById(R.id.btnList);
-        VIDEO_ID = "QKm-SOOMC4c";
         buttonInsert.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
                 Intent intent = new Intent(getApplicationContext(), RecordList.class);
                 intent.putExtra("id", id);
-                intent.putExtra("type", type);
-                intent.putExtra("videoId", VIDEO_ID);
                 startActivity(intent);
             }
         });

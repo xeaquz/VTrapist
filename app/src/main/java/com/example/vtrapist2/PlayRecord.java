@@ -45,6 +45,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -76,8 +77,11 @@ public class PlayRecord extends YouTubeBaseActivity {
     String VIDEO_ID;
     String USER_ID;
     int VIDEO_TIME;
-    String type;
+    String ACCEL_ID;
     int videoTime = 0;
+    float samplingRate_a;
+
+    Object signalData;
     String[] splitData;
     int signalCnt = 0;
 
@@ -94,14 +98,14 @@ public class PlayRecord extends YouTubeBaseActivity {
 
         Intent intent = getIntent();
         VIDEO_ID = intent.getExtras().getString("videoId");
-        USER_ID = intent.getExtras().getString("id");
-        type = intent.getExtras().getString("type");
+        USER_ID = intent.getExtras().getString("userId");
+        ACCEL_ID = intent.getExtras().getString("accelId");
+        samplingRate_a = intent.getExtras().getFloat("samplingRate_a");
 
         VIDEO_ID = "PSKEmWhjqVU";
         VIDEO_TIME = 180;
-
+/*
         String sData = readFile();
-
 
         // split data to array
         sData = sData.substring(1, sData.lastIndexOf("]"));
@@ -109,31 +113,14 @@ public class PlayRecord extends YouTubeBaseActivity {
         len = splitData.length;
         samplingRate = (float)len/(float)VIDEO_TIME;
         Log.d("dddddd", Float.toString(samplingRate));
-
-        //getSignalData();
-        record.put("signal", signal);
-
-        db.collection("gyro")
-                .add(record)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d("dddddd", "PlayRecord DocumentSnapshot added with ID: " + documentReference.getId());
-
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("dddddd", "PlayRecord Error adding document", e);
-                    }
-                });
+*/
+        getSignalData();
 
         TimerTask TT = new TimerTask() {
             @Override
             public void run() {
                 videoTime++;
-                cnt+=samplingRate;
+                cnt+=samplingRate_a;
                 Log.d("dddddd", Integer.toString(videoTime));
                 Log.d("dddddd", Float.toString(cnt));
                 if (videoTime < VIDEO_TIME-5) {
@@ -205,61 +192,29 @@ public class PlayRecord extends YouTubeBaseActivity {
     }
 
     public void getSignalData() {
-        db.collection("session")
-                .whereEqualTo("userId", USER_ID)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot document : task.getResult()) {
-                                Log.d(TAG, document.getId() + " => " + document.getData());
-                                sessionInfo = document.toObject(SessionInfo.class);
-
-                                db.collection("accel").document(sessionInfo.accelId)
-                                        .get()
-                                        .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                                            @Override
-                                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                                DocumentSnapshot document = task.getResult();
-                                                signal = document.getData();
-                                                Log.d("dddddd", signal.toString());
-                                            }
-                                        });
-                        }
-                        } else {
-                            Log.d(TAG, "Error getting documents: ", task.getException());
-                        }
+        DocumentReference docRef = db.collection("accel").document(ACCEL_ID);
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        data = document.getData();
+                        signalData = data.get("signal");
+                        Log.d("dddddd", signalData.toString());
+                    } else {
+                        Log.d(TAG, "No such document");
                     }
-                });
-
-
-    }
-
-    public String readFile() {
-        StringBuffer data = new StringBuffer();
-
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-
-            try {
-                File f = new File(path, "gyroY.txt");
-                BufferedReader buffer = new BufferedReader(new FileReader(f));
-                String str = buffer.readLine();
-                while (str != null) {
-                    data.append(str);
-                    str = buffer.readLine();
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
                 }
-                buffer.close();
-            } catch (Exception e) {
-                e.printStackTrace();
             }
-            Log.d("dddddd", data.toString());
-        }
-        return data.toString();
+        });
+
 
     }
+
 
     public void tempTask() {
         TimerTask task = new TimerTask() {

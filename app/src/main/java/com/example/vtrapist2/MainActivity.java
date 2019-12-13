@@ -162,42 +162,4 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public class UserInfo {
-        public String userId;
-        public String age;
-        public String gender;
-        public String phobia;
-        public String medicalHistory;
-        public String levelOfDepression;
-
-        public UserInfo(String userId, String age, String gender, String phobia, String medicalHistory, String levelOfDepression) {
-            this.userId = userId;
-            this.age = age;
-            this.gender = gender;
-            this.phobia = phobia;
-            this.medicalHistory = medicalHistory;
-            this.levelOfDepression = levelOfDepression;
-        }
-    }
-
-/*
-        type.put("1", "acro");
-        type.put("2", "spider");
-
-        db.collection("users").document(id).collection("type")
-                .add(type)
-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                    @Override
-                    public void onSuccess(DocumentReference documentReference) {
-                        Log.d("dddddd", "DocumentSnapshot added with ID: " + documentReference.getId());
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.w("dddddd", "Error adding document", e);
-                    }
-                });
-*/
-
 }

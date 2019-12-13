@@ -97,7 +97,9 @@ public class PlayVideo extends YouTubeBaseActivity {
     String VIDEO_ID;
     String USER_ID;
     String type;
-    Integer videoTime = 0;
+    String timeStarted;
+    int videoTime = 0;
+    float samplingRate_a;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Map<Object, Object> record = new HashMap<>();
@@ -153,6 +155,11 @@ public class PlayVideo extends YouTubeBaseActivity {
             }
         }.start();
 
+        // Get current time
+        SimpleDateFormat fm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date time = new Date();
+        timeStarted = fm.format(time);
+
         checkPermission();
 
         XAxis xAxis = lineChart.getXAxis();
@@ -177,13 +184,6 @@ public class PlayVideo extends YouTubeBaseActivity {
                         youTubePlayer.play();
                         SensorOnResume();
 
-                        // Get current time
-                        SimpleDateFormat fm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Date time = new Date();
-                        String time1 = fm.format(time);
-
-                        session.put("timeStarted", time1);
-
                         if (flag == 0) //first start
                             timer.schedule(TT, 0, 1000);
                         else //restart
@@ -206,6 +206,7 @@ public class PlayVideo extends YouTubeBaseActivity {
                         btnStart.setEnabled(false);
                         btnStop.setEnabled(false);
                         end.setEnabled(false);
+                        timer.cancel();
 
                         String sData = readFile();
 
@@ -213,6 +214,9 @@ public class PlayVideo extends YouTubeBaseActivity {
                         sData = sData.substring(1, sData.lastIndexOf("]"));
                         String[] splitData = sData.split(",");
                         int len = splitData.length;
+                        len = splitData.length;
+                        samplingRate_a = (float)len/(float)videoTime;
+                        Log.d("dddddd", "sampling rate: " + Float.toString(samplingRate_a));
 
                         for (int i = 0; i < len; i++) {
                             signal.put(Integer.toString(i), splitData[i]);
@@ -228,6 +232,44 @@ public class PlayVideo extends YouTubeBaseActivity {
                                     public void onSuccess(DocumentReference documentReference) {
                                         Log.d("dddddd", "PlayVideo DocumentSnapshot added with ID: " + documentReference.getId());
                                         accelId = documentReference.getId();
+
+                                        // put session
+                                        session.put("timeStarted", timeStarted);
+                                        session.put("accelId", accelId);
+                                        session.put("timePlayed", videoTime);
+                                        session.put("sampligRate_a", samplingRate_a);
+                                        db.collection("session")
+                                                .add(session)
+                                                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                                                    @Override
+                                                    public void onSuccess(DocumentReference documentReference) {
+                                                        Log.d("dddddd", "PlayVideo DocumentSnapshot added with ID: " + documentReference.getId());
+                                                        sessionId = documentReference.getId();
+
+                                                        // update session id of signal collection
+                                                        db.collection("accel").document(accelId)
+                                                                .update("sessionId", sessionId)
+                                                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                                    @Override
+                                                                    public void onSuccess(Void aVoid) {
+                                                                        Log.d("dddddd", "DocumentSnapshot successfully updated!");
+                                                                    }
+                                                                })
+                                                                .addOnFailureListener(new OnFailureListener() {
+                                                                    @Override
+                                                                    public void onFailure(@NonNull Exception e) {
+                                                                        Log.w("dddddd", "Error updating document", e);
+                                                                    }
+                                                                });
+                                                    }
+                                                })
+                                                .addOnFailureListener(new OnFailureListener() {
+                                                    @Override
+                                                    public void onFailure(@NonNull Exception e) {
+                                                        Log.w("dddddd", "Error adding document", e);
+                                                    }
+                                                });
+
                                     }
                                 })
                                 .addOnFailureListener(new OnFailureListener() {
@@ -236,40 +278,8 @@ public class PlayVideo extends YouTubeBaseActivity {
                                         Log.w("dddddd", "PlayVideo Error adding document", e);
                                     }
                                 });
+                        finish();
 
-                        // put session
-                        session.put("timePlayed", videoTime);
-                        session.put("accelId", accelId);
-                        db.collection("sessoin")
-                                .add(session)
-                                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                                    @Override
-                                    public void onSuccess(DocumentReference documentReference) {
-                                        sessionId = documentReference.getId();
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Log.w("dddddd", "Error adding document", e);
-                                    }
-                                });
-
-                        // update session id of signal collection
-                        db.collection("accel").document(accelId)
-                                .update("sessionId", sessionId)
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Log.d("dddddd", "DocumentSnapshot successfully updated!");
-                                    }
-                                })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Log.w("dddddd", "Error updating document", e);
-                                    }
-                                });
                     }
                 });
             }
@@ -302,6 +312,9 @@ public class PlayVideo extends YouTubeBaseActivity {
                 e.printStackTrace();
             }
             Log.d("dddddd", data.toString());
+        }
+        else {
+            Log.d("dddddd", "fail to read file");
         }
         return data.toString();
 
