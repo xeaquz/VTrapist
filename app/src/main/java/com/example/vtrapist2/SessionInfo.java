@@ -16,12 +16,12 @@ public class SessionInfo {
     public float samplingRate_a;
 
     public SessionInfo(){}
-    public SessionInfo(String userId, String videoId, String timeStarted, int timePlayed, String accelId, String type, float samplingRate_a) {
+    public SessionInfo(String userId, String videoId, String timeStarted, int timePlayed, String heartId, String type, float samplingRate_a) {
         this.userId = userId;
         this.videoId = videoId;
         this.timeStarted = timeStarted;
         this.timePlayed = timePlayed;
-        this.accelId = accelId;
+        this.heartId = heartId;
         this.type = type;
         this.samplingRate_a = samplingRate_a;
     }

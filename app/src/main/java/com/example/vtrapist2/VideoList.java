@@ -41,6 +41,8 @@ public class VideoList extends YouTubeBaseActivity {
     private ArrayList<Object> mArrayList;
     private ThumbnailAdapter mAdapter;
 
+    private TextView txtView_type;
+
     Map<String, Object> data = new HashMap<>();
     Map<String, Object> videoData = new HashMap<>();
     String type = "";
@@ -49,7 +51,7 @@ public class VideoList extends YouTubeBaseActivity {
 
     protected void onCreate(Bundle savedInstantState) {
         super.onCreate(savedInstantState);
-        setContentView(R.layout.thumbnails);
+        setContentView(R.layout.video_list);
 
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler);
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);
@@ -59,6 +61,9 @@ public class VideoList extends YouTubeBaseActivity {
         id = intent.getExtras().getString("id");
         type = intent.getExtras().getString("type");
         mArrayList = new ArrayList<>();
+
+        txtView_type = findViewById(R.id.txtView_type);
+        txtView_type.append(type);
 
         mAdapter = new ThumbnailAdapter(mArrayList, id, type);
         mRecyclerView.setAdapter(mAdapter);
@@ -78,31 +83,34 @@ public class VideoList extends YouTubeBaseActivity {
                         Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                         data = document.getData();
                         type = data.get("type").toString();
+                        getVideo();
 
-                        DocumentReference docRef = db.collection("video").document(type);
-                        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                            @Override
-                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                                if (task.isSuccessful()) {
-                                    DocumentSnapshot document = task.getResult();
-                                    if (document.exists()) {
-                                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                                        videoData = document.getData();
 
-                                        for (Map.Entry<String, Object> entry : videoData.entrySet()) {
-                                            System.out.println("key : " + entry.getKey() + " , value : " + entry.getValue());
-                                            mArrayList.add(entry.getValue());
-                                        }
 
-                                        mAdapter.notifyDataSetChanged();
-                                    } else {
-                                        Log.d(TAG, "No such document");
-                                    }
-                                } else {
-                                    Log.d(TAG, "get failed with ", task.getException());
-                                }
-                            }
-                        });
+//                        DocumentReference docRef = db.collection("video").document(type);
+//                        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+//                            @Override
+//                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+//                                if (task.isSuccessful()) {
+//                                    DocumentSnapshot document = task.getResult();
+//                                    if (document.exists()) {
+//                                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+//                                        videoData = document.getData();
+//
+//                                        for (Map.Entry<String, Object> entry : videoData.entrySet()) {
+//                                            System.out.println("key : " + entry.getKey() + " , value : " + entry.getValue());
+//                                            mArrayList.add(entry.getValue());
+//                                        }
+//
+//                                        mAdapter.notifyDataSetChanged();
+//                                    } else {
+//                                        Log.d(TAG, "No such document");
+//                                    }
+//                                } else {
+//                                    Log.d(TAG, "get failed with ", task.getException());
+//                                }
+//                            }
+//                        });
 
                     } else {
                         Log.d(TAG, "No such document");
@@ -112,9 +120,6 @@ public class VideoList extends YouTubeBaseActivity {
                 }
             }
         });
-
-
-
 
         Button buttonInsert = (Button) findViewById(R.id.btnList);
         buttonInsert.setOnClickListener(new View.OnClickListener() {
@@ -126,5 +131,28 @@ public class VideoList extends YouTubeBaseActivity {
                 startActivity(intent);
             }
         });
+    }
+
+    public void getVideo() {
+        db.collection("videos")
+                .whereEqualTo("type", type)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Log.d(TAG, document.getId() + " => " + document.getData());
+
+                                mArrayList.add(document.getId());
+
+                                mAdapter.notifyDataSetChanged();
+
+                            }
+                        } else {
+                            Log.d(TAG, "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
     }
 }

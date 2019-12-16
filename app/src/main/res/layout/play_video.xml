@@ -6,66 +6,55 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello World!"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
 
         <view
             android:id="@+id/youtubeView"
             class="com.google.android.youtube.player.YouTubePlayerView"
             android:layout_width="345dp"
             android:layout_height="215dp"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
-            android:layout_marginTop="16dp"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:layout_editor_absoluteX="5dp"/>
+            android:layout_marginTop="16dp"/>
 
 
         <Button
             android:id="@+id/youtubeBtnStart"
+            android:layout_below="@+id/youtubeView"
+            android:layout_toLeftOf="@+id/youtubeBtnStop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="10dp"
             android:text="Start"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"/>
+            />
+
         <Button
             android:id="@+id/youtubeBtnStop"
+            android:layout_below="@+id/youtubeView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Stop"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"/>
-
-        <TextView
-            android:id="@+id/heart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="heart"/>
+            android:layout_centerHorizontal="true"
+            android:layout_margin="10dp"
+            android:text="Stop"/>
         <Button
             android:id="@+id/End"
+            android:layout_below="@+id/youtubeView"
+            android:layout_toRightOf="@+id/youtubeBtnStop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_margin="10dp"
             android:text="End"/>
 
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-    </LinearLayout>
+            android:layout_height="200dp"
+            android:layout_below="@+id/End"
+            />
+    </RelativeLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -77,9 +77,10 @@ public class PlayRecord extends YouTubeBaseActivity {
     String VIDEO_ID;
     String USER_ID;
     int VIDEO_TIME;
-    String ACCEL_ID;
+    String HEART_ID;
     int videoTime = 0;
     float samplingRate_a;
+    int timePlayed;
 
     Object signalData;
     String[] splitData;
@@ -99,31 +100,48 @@ public class PlayRecord extends YouTubeBaseActivity {
         Intent intent = getIntent();
         VIDEO_ID = intent.getExtras().getString("videoId");
         USER_ID = intent.getExtras().getString("userId");
-        ACCEL_ID = intent.getExtras().getString("accelId");
-        samplingRate_a = intent.getExtras().getFloat("samplingRate_a");
+        HEART_ID = intent.getExtras().getString("heartId");
+        samplingRate = intent.getExtras().getFloat("samplingRate_a");
+        timePlayed = intent.getExtras().getInt("timePlayed");
 
-        VIDEO_ID = "PSKEmWhjqVU";
-        VIDEO_TIME = 180;
-/*
-        String sData = readFile();
+        DocumentReference docRef = db.collection("heart").document(HEART_ID);
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        data = document.getData();
+                        signalData = data.get("signal");
 
-        // split data to array
-        sData = sData.substring(1, sData.lastIndexOf("]"));
-        splitData = sData.split(",");
-        len = splitData.length;
-        samplingRate = (float)len/(float)VIDEO_TIME;
-        Log.d("dddddd", Float.toString(samplingRate));
-*/
-        getSignalData();
+                        String sData = signalData.toString();
+
+                        // split data to array
+                        sData = sData.substring(1, sData.lastIndexOf("]"));
+                        splitData = sData.split(",");
+                        len = splitData.length;
+                        Log.d("dddddd", Float.toString(len));
+                        Log.d("dddddd", Float.toString(samplingRate));
+
+                        Log.d("dddddd", signalData.toString());
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
+
+
 
         TimerTask TT = new TimerTask() {
             @Override
             public void run() {
                 videoTime++;
-                cnt+=samplingRate_a;
-                Log.d("dddddd", Integer.toString(videoTime));
-                Log.d("dddddd", Float.toString(cnt));
-                if (videoTime < VIDEO_TIME-5) {
+                cnt += samplingRate/10;
+                if (videoTime/10 < timePlayed) {
                     addEntry(Float.parseFloat(splitData[(int) cnt]));
                 }
             }
@@ -158,10 +176,12 @@ public class PlayRecord extends YouTubeBaseActivity {
                     @Override
                     public void onClick(View v) {
                         youTubePlayer.play();
+                        VIDEO_TIME = youTubePlayer.getDurationMillis();
                         if (flag == 0) //first start
-                            timer.schedule(TT, 0, 1000);
-                        else //restart
+                            timer.schedule(TT, 0, 100);
+                        else { //restart
                             tempTask();
+                        }
                     }
                 });
                 btnStop.setOnClickListener(new View.OnClickListener() {
@@ -192,7 +212,7 @@ public class PlayRecord extends YouTubeBaseActivity {
     }
 
     public void getSignalData() {
-        DocumentReference docRef = db.collection("accel").document(ACCEL_ID);
+        DocumentReference docRef = db.collection("heart").document(HEART_ID);
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
@@ -221,16 +241,16 @@ public class PlayRecord extends YouTubeBaseActivity {
             @Override
             public void run() {
                 videoTime++;
-                cnt+=samplingRate;
+                cnt+=samplingRate/10;
                 Log.d("dddddd", Integer.toString(videoTime));
                 Log.d("dddddd", Float.toString(cnt));
-                if (videoTime < VIDEO_TIME-5) {
+                if (videoTime < timePlayed) {
                     addEntry(Float.parseFloat(splitData[(int) cnt]));
                 }
             }
         };
         timer = new Timer();
-        timer.schedule(task, 0, 1000);
+        timer.schedule(task, 0, 100);
     }
 
 
@@ -254,7 +274,7 @@ public class PlayRecord extends YouTubeBaseActivity {
     }
 
     private LineDataSet createSet() {
-        LineDataSet set = new LineDataSet(null, "Example");
+        LineDataSet set = new LineDataSet(null, "Heart");
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
         set.setColor(ColorTemplate.getHoloBlue());
         set.setCircleColor(Color.WHITE);

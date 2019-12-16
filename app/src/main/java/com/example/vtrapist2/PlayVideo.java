@@ -45,9 +45,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
@@ -84,13 +86,11 @@ public class PlayVideo extends YouTubeBaseActivity {
     YouTubePlayer.OnInitializedListener listener;
     YouTubePlayer youTubePlayer;
 
-
     SensorManager mSensorManager;
     Sensor mHeartRate; // HeartRate 센서
     // 장치를 터치하는 사람의 현재 heart rate를 기록하는 센서
     SensorEventListener heartLs;
 
-    TextView heart;
     Button end;
     LineChart lineChart;
 
@@ -98,22 +98,26 @@ public class PlayVideo extends YouTubeBaseActivity {
     String USER_ID;
     String type;
     String timeStarted;
-    int videoTime = 0;
+    int timePlayed;
     float samplingRate_a;
+    int duration;
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     Map<Object, Object> record = new HashMap<>();
     Map<Object, Object> session = new HashMap<>();
-    Map<String, Object> signal = new HashMap<>();
+    ArrayList<Float> signal = new ArrayList<>();
+    float curSignal;
     String sessionId;
-    String accelId;
+    String heartId;
 
     Integer flag = 0;
     Timer timer = new Timer();
     TimerTask TT = new TimerTask() {
         @Override
         public void run() {
-            videoTime++;
+            addEntry(curSignal);
+            signal.add(curSignal);
+
         }
     };
 
@@ -130,7 +134,6 @@ public class PlayVideo extends YouTubeBaseActivity {
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         heartLs = new heartListener();
 
-        heart = (TextView) findViewById(R.id.heart);
         end = (Button) findViewById(R.id.End);
         lineChart = findViewById(R.id.chart);
 
@@ -182,10 +185,12 @@ public class PlayVideo extends YouTubeBaseActivity {
                     @Override
                     public void onClick(View v) {
                         youTubePlayer.play();
+                        duration = (int)youTubePlayer.getDurationMillis()/1000;
+                        Log.d("dddddd", Integer.toString(duration));
                         SensorOnResume();
 
                         if (flag == 0) //first start
-                            timer.schedule(TT, 0, 1000);
+                            timer.schedule(TT, 0, 100);
                         else //restart
                             tempTask();
                     }
@@ -208,36 +213,41 @@ public class PlayVideo extends YouTubeBaseActivity {
                         end.setEnabled(false);
                         timer.cancel();
 
-                        String sData = readFile();
+                        saveData();
 
-                        // split data to array
-                        sData = sData.substring(1, sData.lastIndexOf("]"));
-                        String[] splitData = sData.split(",");
-                        int len = splitData.length;
-                        len = splitData.length;
-                        samplingRate_a = (float)len/(float)videoTime;
-                        Log.d("dddddd", "sampling rate: " + Float.toString(samplingRate_a));
+//                        String sData = readFile();
+//
+//                        // split data to array
+//                        sData = sData.substring(1, sData.lastIndexOf("]"));
+//                        String[] splitData = sData.split(",");
+//                        int len = splitData.length;
+//                        len = splitData.length;
+//                        samplingRate_a = (float)len/(float)duration;
+//                        Log.d("dddddd", "sampling rate: " + Float.toString(samplingRate_a));
+//
+//                        for (int i = 0; i < len; i++) {
+//                            signal.put(Integer.toString(i), splitData[i]);
+//                        }
 
-                        for (int i = 0; i < len; i++) {
-                            signal.put(Integer.toString(i), splitData[i]);
-                        }
+                        timePlayed = youTubePlayer.getCurrentTimeMillis()/1000;
+                        samplingRate_a = signal.size()/timePlayed;
 
                         // put signal
                         record.put("signal", signal);
                         record.put("sessionId", "");
-                        db.collection("accel")
+                        db.collection("heart")
                                 .add(record)
                                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                                     @Override
                                     public void onSuccess(DocumentReference documentReference) {
-                                        Log.d("dddddd", "PlayVideo DocumentSnapshot added with ID: " + documentReference.getId());
-                                        accelId = documentReference.getId();
+                                        Log.d("dddddd", "PlayVideo DocumentSnapshot added with ID: " + documentReference.getId() + timePlayed);
+                                        heartId = documentReference.getId();
 
                                         // put session
                                         session.put("timeStarted", timeStarted);
-                                        session.put("accelId", accelId);
-                                        session.put("timePlayed", videoTime);
-                                        session.put("sampligRate_a", samplingRate_a);
+                                        session.put("heartId", heartId);
+                                        session.put("timePlayed", timePlayed);
+                                        session.put("samplingRate_a", samplingRate_a);
                                         db.collection("session")
                                                 .add(session)
                                                 .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
@@ -247,7 +257,7 @@ public class PlayVideo extends YouTubeBaseActivity {
                                                         sessionId = documentReference.getId();
 
                                                         // update session id of signal collection
-                                                        db.collection("accel").document(accelId)
+                                                        db.collection("heart").document(heartId)
                                                                 .update("sessionId", sessionId)
                                                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                                                     @Override
@@ -290,6 +300,30 @@ public class PlayVideo extends YouTubeBaseActivity {
             }
         };
         youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
+    }
+
+    // 스마트폰 내에 센서 데이터를 txt 파일로 저장
+    public void saveData(){
+
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            try {
+                // * Save Heart Rate Data * //
+                // Save Heart Rate Data
+                File f = new File(path, "heart.txt");
+                FileWriter fw = new FileWriter(f, false);
+                PrintWriter out = new PrintWriter(fw);
+                out.println(signal);
+                out.close();
+            } catch(IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+        else {
+            Toast.makeText(getApplicationContext(), "외부 메모리 읽기 쓰기 불가능",Toast.LENGTH_SHORT).show();
+        }
     }
 
     public String readFile() {
@@ -388,7 +422,7 @@ public class PlayVideo extends YouTubeBaseActivity {
     }
 
     private LineDataSet createSet() {
-        LineDataSet set = new LineDataSet(null, "Example");
+        LineDataSet set = new LineDataSet(null, "heart");
         set.setAxisDependency(YAxis.AxisDependency.LEFT);
         set.setColor(ColorTemplate.getHoloBlue());
         set.setCircleColor(Color.WHITE);
@@ -405,12 +439,13 @@ public class PlayVideo extends YouTubeBaseActivity {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                videoTime++;
+                addEntry(curSignal);
+                signal.add(curSignal);
                 //todo
             }
         };
         timer = new Timer();
-        timer.schedule(task, 0, 1000);
+        timer.schedule(task, 0, 100);
     }
 
 
@@ -489,12 +524,11 @@ public class PlayVideo extends YouTubeBaseActivity {
         // 여러 개의 센서 이용시 values[0~n]
         public void onSensorChanged(SensorEvent event) {
             float value = event.values[0];
-            Log.d("dddddd", Integer.toString(videoTime));
 
-            //record.put(Integer.toString(videoTime), value);
-            addEntry(value);
+            curSignal = value;
+//            addEntry(value);
 
-            heart.setText(heart.getText().toString() + String.format("%.2f", value));
+//            heart.setText(heart.getText().toString() + String.format("%.2f", value));
         }
 
         public void onAccuracyChanged(Sensor sensor, int accuracy) {

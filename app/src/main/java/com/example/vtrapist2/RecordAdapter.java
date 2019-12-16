@@ -38,8 +38,9 @@ public class RecordAdapter extends RecyclerView.Adapter<RecordAdapter.RecordView
                     int pos = getAdapterPosition();
                     intent.putExtra("videoId", mList.get(pos).videoId);
                     intent.putExtra("userId", mList.get(pos).userId);
-                    intent.putExtra("accelId", mList.get(pos).accelId);
+                    intent.putExtra("heartId", mList.get(pos).heartId);
                     intent.putExtra("samplingRate_a", mList.get(pos).samplingRate_a);
+                    intent.putExtra("timePlayed", mList.get(pos).timePlayed);
 
                     context.startActivity(intent);
                     //youTubePlayer.play();
