@@ -14,6 +14,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import com.firebase.ui.auth.AuthUI;
+import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -22,6 +24,8 @@ import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -35,8 +39,10 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
@@ -47,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     Map<String, Object> user = new HashMap<>();
     Map<Object, Object> record = new HashMap<>();
 
-    String id;
+    String uid;
     String userType;
     String userLevel;
 
@@ -63,10 +69,27 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> levelList;
     ArrayAdapter<String> levelAdapter;
 
+    private static final int RC_SIGN_IN = 123;
+    private FirebaseAuth mAuth;
+
+    @Override
+
+    public void onStart() {
+
+        super.onStart();
+
+        // 활동을 초기화할 때 사용자가 현재 로그인되어 있는지 확인합니다.
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Intent intent = getIntent();
+        uid = intent.getStringExtra("uid");
+        Log.d("dddddd", "DocumentSnapshot added with ID: " + uid);
 
         typeList = new ArrayList<>();
         typeList.add("height");
@@ -136,25 +159,34 @@ public class MainActivity extends AppCompatActivity {
                 user.put("medical", medical);
                 user.put("level", level);
 
-                db.collection("user")
-                        .add(user)
-                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                            @Override
-                            public void onSuccess(DocumentReference documentReference) {
-                                id = documentReference.getId();
-                                Log.d("dddddd", "DocumentSnapshot added with ID: " + documentReference.getId());
-                                Intent intent = new Intent(getApplicationContext(), VideoList.class);
-                                intent.putExtra("type", type);
-                                intent.putExtra("id", id);
-                                startActivity(intent);
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.w("dddddd", "Error adding document", e);
-                            }
-                        });
+                db.collection("user").document(uid).set(user);
+
+                Log.d("dddddd", "DocumentSnapshot added with ID: " + uid);
+
+                Intent intent2 = new Intent(getApplicationContext(), VideoList.class);
+                intent2.putExtra("type", type);
+                intent2.putExtra("id", uid);
+                startActivity(intent2);
+                finish();
+//                db.collection("user")
+//                        .add(user)
+//                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+//                            @Override
+//                            public void onSuccess(DocumentReference documentReference) {
+//                                id = documentReference.getId();
+//                                Log.d("dddddd", "DocumentSnapshot added with ID: " + documentReference.getId());
+//                                Intent intent = new Intent(getApplicationContext(), VideoList.class);
+//                                intent.putExtra("type", type);
+//                                intent.putExtra("id", uid);
+//                                startActivity(intent);
+//                            }
+//                        })
+//                        .addOnFailureListener(new OnFailureListener() {
+//                            @Override
+//                            public void onFailure(@NonNull Exception e) {
+//                                Log.w("dddddd", "Error adding document", e);
+//                            }
+//                        });
 
             }
         });
