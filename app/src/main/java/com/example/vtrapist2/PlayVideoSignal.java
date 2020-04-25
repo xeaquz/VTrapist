@@ -1,7 +1,14 @@
 package com.example.vtrapist2;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.Dialog;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.hardware.Sensor;
@@ -14,7 +21,10 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +63,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -71,41 +82,63 @@ import org.json.JSONObject;
 
 import static android.Manifest.permission.BODY_SENSORS;
 
-public class PlayVideo extends YouTubeBaseActivity {
+public class PlayVideoSignal extends YouTubeBaseActivity {
     private static final int RECOVERY_REQUEST = 1;
     public static final String API_KEY = "AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI";
 
-    YouTubePlayerView youTubeView;
-    Button btnStart, btnStop;
-    YouTubePlayer.OnInitializedListener listener;
-    YouTubePlayer youTubePlayer;
+    // * 블루투스 관련 * //
+    private TextView status; // 연결됐는지 안됐는지 상태창
+    private Button btnConnect, btnSensor;
 
-    SensorManager mSensorManager;
-    Sensor mHeartRate; // HeartRate 센서
+    private Dialog dialog; // 블루투스 창
+
+    private ArrayAdapter<String> chatAdapter;
+    private ArrayList<String> chatMessages;
+    private BluetoothAdapter bluetoothAdapter; // 블루투스 어댑터
+
+    public static final int MESSAGE_STATE_CHANGE = 1;
+    public static final int MESSAGE_READ = 2;
+    public static final int MESSAGE_WRITE = 3;
+    public static final int MESSAGE_DEVICE_OBJECT = 4;
+    public static final int MESSAGE_TOAST = 5;
+    public static final String DEVICE_OBJECT = "device_name";
+
+    private static final int REQUEST_ENABLE_BLUETOOTH = 1;
+    private ArrayAdapter<String> discoveredDevicesAdapter;
+    private ChatController chatController;
+    private BluetoothDevice connectingDevice;
+
+    private YouTubePlayerView youTubeView;
+    private Button btnStart, btnStop;
+    private YouTubePlayer.OnInitializedListener listener;
+    private YouTubePlayer youTubePlayer;
+
+    private SensorManager mSensorManager;
+    private Sensor mHeartRate; // HeartRate 센서
     // 장치를 터치하는 사람의 현재 heart rate를 기록하는 센서
-    SensorEventListener heartLs;
+    private SensorEventListener heartLs;
 
-    Button end;
-    LineChart lineChart;
+    private Button btnEnd;
+    private LineChart lineChart;
 
-    String VIDEO_ID;
-    String USER_ID;
-    String type;
-    String timeStarted;
-    int timePlayed;
-    float samplingRate_a;
-    int duration;
+    private String VIDEO_ID;
+    private String USER_ID;
+    private String type;
+    private String timeStarted;
+    private int timePlayed;
+    private float samplingRate_a;
+    private int duration;
 
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    Map<Object, Object> record = new HashMap<>();
-    Map<Object, Object> session = new HashMap<>();
-    ArrayList<Float> signal = new ArrayList<>();
-    float curSignal;
-    String sessionId;
-    String heartId;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private Map<Object, Object> record = new HashMap<>();
+    private Map<Object, Object> session = new HashMap<>();
+    private ArrayList<Float> signal = new ArrayList<>();
+    private float curSignal;
+    private String sessionId;
+    private String heartId;
 
-    Integer flag = 0;
-    Timer timer = new Timer();
+    private Integer flag = 0;
+    private Timer timer = new Timer();
     TimerTask TT = new TimerTask() {
         @Override
         public void run() {
@@ -119,34 +152,28 @@ public class PlayVideo extends YouTubeBaseActivity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.play_video);
+        setContentView(R.layout.play_video_signal);
 
-        btnStart = findViewById(R.id.youtubeBtnStart);
-        btnStop = findViewById(R.id.youtubeBtnStop);
-        youTubeView = findViewById(R.id.youtubeView);
+        findViewsByIds();
+        connectBLE();
 
-        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        heartLs = new heartListener();
-
-        end = (Button) findViewById(R.id.End);
-        lineChart = findViewById(R.id.chart);
-
+        // get intent
         Intent intent = getIntent();
         VIDEO_ID = intent.getExtras().getString("videoId");
         USER_ID = intent.getExtras().getString("id");
         type = intent.getExtras().getString("type");
 
-        session.put("userId", USER_ID);
-        session.put("videoId", VIDEO_ID);
-        session.put("type", type);
+        // set sensor
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        heartLs = new heartListener();
+        checkPermission();
 
-        // Get current time
+        // get current time
         SimpleDateFormat fm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date time = new Date();
         timeStarted = fm.format(time);
 
-        checkPermission();
-
+        // graph
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setTextSize(10f);
@@ -158,6 +185,7 @@ public class PlayVideo extends YouTubeBaseActivity {
         LineData data = new LineData();
         lineChart.setData(data);
 
+        // youtube
         listener = new YouTubePlayer.OnInitializedListener() {
             @Override
             public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
@@ -166,6 +194,7 @@ public class PlayVideo extends YouTubeBaseActivity {
                 btnStart.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        sendMessage("start");
                         youTubePlayer.play();
                         duration = (int)youTubePlayer.getDurationMillis()/1000;
                         Log.d("dddddd", Integer.toString(duration));
@@ -180,25 +209,29 @@ public class PlayVideo extends YouTubeBaseActivity {
                 btnStop.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        sendMessage("stop");
+
                         youTubePlayer.pause();
                         SensorOnPause();
                         timer.cancel();
                         flag = 1;
                     }
                 });
-                end.setOnClickListener(new View.OnClickListener() {
+                btnEnd.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
 
+                        sendMessage("stop");
+
                         btnStart.setEnabled(false);
                         btnStop.setEnabled(false);
-                        end.setEnabled(false);
+                        btnEnd.setEnabled(false);
                         timer.cancel();
-
-                        saveData();
 
                         timePlayed = youTubePlayer.getCurrentTimeMillis()/1000;
                         samplingRate_a = signal.size()/timePlayed;
+                        int tmp = signal.size();
+                        Log.d("dddddd", Integer.toString(tmp) + " " + timePlayed);
 
                         // put signal
                         record.put("signal", signal);
@@ -212,6 +245,9 @@ public class PlayVideo extends YouTubeBaseActivity {
                                         heartId = documentReference.getId();
 
                                         // put session
+                                        session.put("userId", USER_ID);
+                                        session.put("videoId", VIDEO_ID);
+                                        session.put("type", type);
                                         session.put("timeStarted", timeStarted);
                                         session.put("heartId", heartId);
                                         session.put("timePlayed", timePlayed);
@@ -268,6 +304,271 @@ public class PlayVideo extends YouTubeBaseActivity {
             }
         };
         youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
+    }
+
+    public void connectBLE() {
+        // support BLE : 기기에서 블루투스를 지원하는지 확인
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            Toast.makeText(this, "Bluetooth is not available!", Toast.LENGTH_SHORT).show();
+            finish(); // 지원안되면 블루투스 꺼버리기
+        }
+
+        // Active BLE : 장치가 BLE를 사용하는지 확인 <-> 사용하지 않을 경우, 켜도록 요청
+        if (!bluetoothAdapter.isEnabled()){
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
+        }
+
+        // 블루투스 연결 창 보여주기
+        btnConnect.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View view){
+                initBLE();
+            }
+        });
+
+        //chat adapter 설정
+        chatMessages = new ArrayList<>();
+        chatAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, chatMessages);
+        //listView.setAdapter(chatAdapter);
+    }
+
+    // * 블루투스 관련 * //
+
+    private Handler handler = new Handler(new Handler.Callback() {
+
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case ChatController.STATE_CONNECTED:
+                            setStatus("Connected to: " + connectingDevice.getName());
+                            btnConnect.setEnabled(false);
+                            break;
+                        case ChatController.STATE_CONNECTING:
+                            setStatus("Connecting...");
+                            btnConnect.setEnabled(false);
+                            break;
+                        case ChatController.STATE_LISTEN:
+                            setStatus("Listen...");
+                            break;
+                        case ChatController.STATE_NONE:
+                            setStatus("Not connected");
+                            btnConnect.setEnabled(true);
+                            break;
+                    }
+                    break;
+                case MESSAGE_WRITE: // 메시지 Write는 Watch만 함!!!
+                    // list에 쌓아놓은 데이터 전송
+                    // 리스트 초기화
+
+                    byte[] writeBuf = (byte[]) msg.obj;
+
+                    String writeMessage = new String(writeBuf);
+                    chatMessages.add("Me: " + writeMessage);
+                    chatAdapter.notifyDataSetChanged();
+                    break;
+                case MESSAGE_READ: // 메시지 Read는 스마트폰만 함!!
+                    byte[] readBuf = (byte[]) msg.obj;
+
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
+                    chatAdapter.notifyDataSetChanged();
+                    curSignal = Float.parseFloat(readMessage);
+                    Toast.makeText(getApplicationContext(), readMessage, Toast.LENGTH_LONG).show();
+                    break;
+                case MESSAGE_DEVICE_OBJECT:
+                    connectingDevice = msg.getData().getParcelable(DEVICE_OBJECT);
+                    Toast.makeText(getApplicationContext(), "Connected to " + connectingDevice.getName(),
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case MESSAGE_TOAST:
+//                    Toast.makeText(getApplicationContext(), msg.getData().getString("toast"),
+//                            Toast.LENGTH_SHORT).show();
+                    break;
+            }
+            return false;
+        }
+    });
+
+
+
+
+    /*
+     * 블루투스 초기화
+     * */
+    private void initBLE(){ // == showPrinterPickDialog
+        dialog = new Dialog(this);
+        dialog.setContentView(R.layout.layout_bluetooth);
+        dialog.setTitle("Bluetooth Devices");
+
+        // Discovery BLE :
+        if (bluetoothAdapter.isDiscovering()){
+            bluetoothAdapter.cancelDiscovery();
+        }
+        bluetoothAdapter.startDiscovery();
+
+        // 블루투스 어댑터 초기화
+        ArrayAdapter<String> pairedDevicesAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+        discoveredDevicesAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1);
+
+        // listview를 dialog에 위치시키기 & 어댑터 붙이기
+        ListView listView = (ListView) dialog.findViewById(R.id.pairedDeviceList);
+        ListView listView2 = (ListView) dialog.findViewById(R.id.discoveredDeviceList);
+        listView.setAdapter(pairedDevicesAdapter);
+        listView2.setAdapter(discoveredDevicesAdapter);
+
+        // 디바이스가 찾아졌을때, 브로드캐스트를 위해 등록
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        registerReceiver(discoveryFinishReceiver, filter);
+
+        // discovery가 완료되었을때, 브로드캐스트를 위해 등록
+        filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(discoveryFinishReceiver, filter);
+
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices(); // 페어링된 장치 목록 가져오기
+
+        // 페어링된 장치가 있다면, 그것들을 어레이 어댑터에 추가하기
+        if (pairedDevices.size() > 0 ){
+            for (BluetoothDevice device : pairedDevices){
+                pairedDevicesAdapter.add(device.getName() + "\n"+ device.getAddress());
+            }
+        } else {
+            pairedDevicesAdapter.add("No devices have been paired");
+        }
+
+        // Listview에 있는 아이템 클릭시 이벤트 핸들링 (Paring)
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                bluetoothAdapter.cancelDiscovery(); // 아이템 클릭시 Discovery 그만하기
+                String info = ((TextView) view).getText().toString(); // 해당 기기의 이름과
+                String address = info.substring(info.length() - 17); // 주소를 얻어오기
+
+                connectToDevice(address);
+                dialog.dismiss(); // Dialog 사라지게
+            }
+
+        });
+
+        // Listview2에 있는 아이템 클릭시 이벤트 핸들링 (Discovering)
+        listView2.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                bluetoothAdapter.cancelDiscovery(); // 아이템 클릭시 Discovery 그만하기
+                String info = ((TextView) view).getText().toString(); // 해당 기기의 이름과
+                String address = info.substring(info.length() - 17); // 주소를 얻어오기
+
+                connectToDevice(address);
+                dialog.dismiss(); // Dialog 사라지게
+            }
+        });
+
+        dialog.findViewById(R.id.cancelButton).setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog.setCancelable(false);
+        dialog.show();
+
+    }
+
+    private void setStatus(String s) {
+        status.setText(s);
+    }
+
+    private void connectToDevice(String deviceAddress){
+        bluetoothAdapter.cancelDiscovery(); // Discovery 그만 하도록 하기
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
+        chatController.connect(device);
+    }
+
+    private void findViewsByIds(){
+        status = (TextView) findViewById(R.id.status);
+        btnConnect = (Button) findViewById(R.id.btn_connect);
+
+        btnStart = findViewById(R.id.youtubeBtnStart);
+        btnStop = findViewById(R.id.youtubeBtnStop);
+        youTubeView = findViewById(R.id.youtubeView);
+
+        btnEnd = (Button) findViewById(R.id.End);
+        lineChart = findViewById(R.id.chart);
+
+
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case REQUEST_ENABLE_BLUETOOTH:
+                if (resultCode == Activity.RESULT_OK) {
+                    chatController = new ChatController(this, handler);
+                } else {
+                    Toast.makeText(this, "Bluetooth still disabled, turn off application!", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
+        } else {
+            chatController = new ChatController(this, handler);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if (chatController != null) {
+            if (chatController.getState() == ChatController.STATE_NONE) {
+                chatController.start();
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (chatController != null)
+            chatController.stop();
+    }
+
+    private final BroadcastReceiver discoveryFinishReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    discoveredDevicesAdapter.add(device.getName() + "\n" + device.getAddress());
+                }
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                if (discoveredDevicesAdapter.getCount() == 0) {
+                    discoveredDevicesAdapter.add(getString(R.string.none_found));
+                }
+            }
+        }
+    };
+
+    private void sendMessage(String message) {
+
+        if (message.length() > 0) {
+            Log.d("dddddd", message);
+            byte[] send = message.getBytes();
+            chatController.write(send);
+            status.append(send.toString());
+        }
     }
 
     // 스마트폰 내에 센서 데이터를 txt 파일로 저장
@@ -335,13 +636,11 @@ public class PlayVideo extends YouTubeBaseActivity {
             public void run() {
                 addEntry(curSignal);
                 signal.add(curSignal);
-                //todo
             }
         };
         timer = new Timer();
         timer.schedule(task, 0, 100);
     }
-
 
     //sensor----------------------------------------------------------------------------------------
     private void checkPermission() {
@@ -386,7 +685,7 @@ public class PlayVideo extends YouTubeBaseActivity {
                         Toast.makeText(this, "Yes Heart Rate Sensor", Toast.LENGTH_SHORT).show();
                     }
                     //SensorOnResume();
-                // permission was granted
+                    // permission was granted
 
                 } else {
 

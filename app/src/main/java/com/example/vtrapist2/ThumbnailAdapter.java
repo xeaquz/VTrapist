@@ -81,7 +81,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.Thum
                 Intent intent;
                 Context context = view.getContext();
                 VIDEO_ID = mList.get(position).toString();
-                intent = new Intent(context, PlayVideo.class);
+                intent = new Intent(context, PlayVideoSignal.class);
                 intent.putExtra("videoId", VIDEO_ID);
                 intent.putExtra("id", id);
                 intent.putExtra("type", type);
