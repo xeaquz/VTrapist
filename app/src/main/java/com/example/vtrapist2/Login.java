@@ -13,14 +13,20 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static androidx.constraintlayout.widget.Constraints.TAG;
+
 public class Login extends AppCompatActivity {
 
     private static final int RC_SIGN_IN = 123;
+    private String uid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,10 +64,10 @@ public class Login extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 // Successfully signed in
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                 Log.d("dddddd", "DocumentSnapshot added with ID: " + user.getUid());
-                intent.putExtra("uid", user.getUid());
-                startActivity(intent);
+                uid = user.getUid();
+                checkDB();
+
                 finish();
                 // ...
             } else {
@@ -73,6 +79,35 @@ public class Login extends AppCompatActivity {
         }
     }
     // [END auth_fui_result]
+
+    public void checkDB() {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference docRef = db.collection("user").document(uid);
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        Intent intent = new Intent(getApplicationContext(), VideoList.class);
+                        Log.d("dddddd", uid);
+                        intent.putExtra("uid", uid);
+                        startActivity(intent);
+                    } else {
+                        Log.d(TAG, "No such document");
+                        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                        intent.putExtra("uid", uid);
+                        Log.d("dddddd", uid);
+
+                        startActivity(intent);
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
+    }
 
     public void signOut() {
         // [START auth_fui_signout]

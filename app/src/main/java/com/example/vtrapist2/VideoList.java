@@ -58,12 +58,10 @@ public class VideoList extends YouTubeBaseActivity {
         mRecyclerView.setLayoutManager(mLinearLayoutManager);
 
         Intent intent = getIntent();
-        id = intent.getExtras().getString("id");
-        type = intent.getExtras().getString("type");
+        id = intent.getExtras().getString("uid");
         mArrayList = new ArrayList<>();
 
         txtView_type = findViewById(R.id.txtView_type);
-        txtView_type.append(type);
 
         mAdapter = new ThumbnailAdapter(mArrayList, id, type);
         mRecyclerView.setAdapter(mAdapter);
@@ -83,6 +81,9 @@ public class VideoList extends YouTubeBaseActivity {
                         Log.d(TAG, "DocumentSnapshot data: " + document.getData());
                         data = document.getData();
                         type = data.get("type").toString();
+
+                        txtView_type.append(type);
+
                         getVideo();
 
 

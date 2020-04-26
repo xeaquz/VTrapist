@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Intent intent2 = new Intent(getApplicationContext(), VideoList.class);
                 intent2.putExtra("type", type);
-                intent2.putExtra("id", uid);
+                intent2.putExtra("uid", uid);
                 startActivity(intent2);
                 finish();
 //                db.collection("user")
