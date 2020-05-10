@@ -1,6 +1,8 @@
 package com.example.vtrapist2;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -27,6 +29,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -34,7 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import static android.content.ContentValues.TAG;
 
-public class VideoList extends YouTubeBaseActivity {
+public class VideoList extends AppCompatActivity {
 
     FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -52,6 +55,10 @@ public class VideoList extends YouTubeBaseActivity {
     protected void onCreate(Bundle savedInstantState) {
         super.onCreate(savedInstantState);
         setContentView(R.layout.video_list);
+
+        getSupportActionBar().setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        getSupportActionBar().setCustomView(R.layout.action_bar);
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#49A5F6")));
 
         RecyclerView mRecyclerView = (RecyclerView) findViewById(R.id.recycler);
         LinearLayoutManager mLinearLayoutManager = new LinearLayoutManager(this);

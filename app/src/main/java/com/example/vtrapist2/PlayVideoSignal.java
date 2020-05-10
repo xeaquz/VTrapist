@@ -359,17 +359,14 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                             break;
                     }
                     break;
-                case MESSAGE_WRITE: // 메시지 Write는 Watch만 함!!!
-                    // list에 쌓아놓은 데이터 전송
-                    // 리스트 초기화
-
+                case MESSAGE_WRITE:
                     byte[] writeBuf = (byte[]) msg.obj;
 
                     String writeMessage = new String(writeBuf);
                     chatMessages.add("Me: " + writeMessage);
                     chatAdapter.notifyDataSetChanged();
                     break;
-                case MESSAGE_READ: // 메시지 Read는 스마트폰만 함!!
+                case MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
 
                     String readMessage = new String(readBuf, 0, msg.arg1);

@@ -66,7 +66,12 @@ public class Login extends AppCompatActivity {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 Log.d("dddddd", "DocumentSnapshot added with ID: " + user.getUid());
                 uid = user.getUid();
-                checkDB();
+
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                Log.d("dddddd", uid);
+                intent.putExtra("uid", uid);
+                startActivity(intent);
+                //checkDB();
 
                 finish();
                 // ...
