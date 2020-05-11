@@ -6,6 +6,11 @@
         android:id="@+id/btn_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
         android:adjustViewBounds="true"
-        android:padding="15dp"/>
+        android:padding="15dp"
+        android:background="#ffffff"
+        android:fontFamily="@font/recipekorea"
+        android:textColor="#858585"
+        android:stateListAnimator="@null"/>
 </LinearLayout>

@@ -6,8 +6,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -44,13 +47,15 @@ public class VideoList extends AppCompatActivity {
     private ArrayList<Object> mArrayList;
     private ThumbnailAdapter mAdapter;
 
-    private TextView txtView_type;
+    private Spinner spinner;
+    private ArrayAdapter<String> typeAdapter;
+    private ArrayList<String> typeList;
 
-    Map<String, Object> data = new HashMap<>();
-    Map<String, Object> videoData = new HashMap<>();
-    String type = "";
-    String id = "";
-    String VIDEO_ID;
+    private Map<String, Object> data = new HashMap<>();
+    private Map<String, Object> videoData = new HashMap<>();
+    private String type = "";
+    private String id = "";
+    private String VIDEO_ID;
 
     protected void onCreate(Bundle savedInstantState) {
         super.onCreate(savedInstantState);
@@ -66,10 +71,32 @@ public class VideoList extends AppCompatActivity {
 
         Intent intent = getIntent();
         id = intent.getExtras().getString("uid");
+
+        // set type list spinner
+        typeList = new ArrayList<>();
+        typeList.add("height");
+        typeList.add("spider");
+
+        typeAdapter = new ArrayAdapter<>(getApplicationContext(),
+                android.R.layout.simple_spinner_dropdown_item, typeList);
+
+        spinner = findViewById(R.id.spinner_type);
+        spinner.setAdapter(typeAdapter);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                getVideo(typeList.get(i));
+                type = typeList.get(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        // set thumbnail
         mArrayList = new ArrayList<>();
-
-        txtView_type = findViewById(R.id.txtView_type);
-
         mAdapter = new ThumbnailAdapter(mArrayList, id, type);
         mRecyclerView.setAdapter(mAdapter);
 
@@ -78,70 +105,11 @@ public class VideoList extends AppCompatActivity {
         mRecyclerView.addItemDecoration(dividerItemDecoration);
 
 
-        DocumentReference userRef = db.collection("user").document(id);
-        userRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if (document.exists()) {
-                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-                        data = document.getData();
-                        type = data.get("type").toString();
-
-                        txtView_type.append(type);
-
-                        getVideo();
-
-
-
-//                        DocumentReference docRef = db.collection("video").document(type);
-//                        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//                            @Override
-//                            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                                if (task.isSuccessful()) {
-//                                    DocumentSnapshot document = task.getResult();
-//                                    if (document.exists()) {
-//                                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-//                                        videoData = document.getData();
-//
-//                                        for (Map.Entry<String, Object> entry : videoData.entrySet()) {
-//                                            System.out.println("key : " + entry.getKey() + " , value : " + entry.getValue());
-//                                            mArrayList.add(entry.getValue());
-//                                        }
-//
-//                                        mAdapter.notifyDataSetChanged();
-//                                    } else {
-//                                        Log.d(TAG, "No such document");
-//                                    }
-//                                } else {
-//                                    Log.d(TAG, "get failed with ", task.getException());
-//                                }
-//                            }
-//                        });
-
-                    } else {
-                        Log.d(TAG, "No such document");
-                    }
-                } else {
-                    Log.d(TAG, "get failed with ", task.getException());
-                }
-            }
-        });
-
-        Button buttonInsert = (Button) findViewById(R.id.btnList);
-        buttonInsert.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Intent intent = new Intent(getApplicationContext(), RecordList.class);
-                intent.putExtra("id", id);
-                startActivity(intent);
-            }
-        });
     }
 
-    public void getVideo() {
+    public void getVideo(String type) {
+        mArrayList.clear();
+        mAdapter.notifyDataSetChanged();
         db.collection("videos")
                 .whereEqualTo("type", type)
                 .get()
@@ -153,7 +121,6 @@ public class VideoList extends AppCompatActivity {
                                 Log.d(TAG, document.getId() + " => " + document.getData());
 
                                 mArrayList.add(document.getId());
-
                                 mAdapter.notifyDataSetChanged();
 
                             }

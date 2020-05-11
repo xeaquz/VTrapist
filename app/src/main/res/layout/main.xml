@@ -3,4 +3,54 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <TextView
+        android:id="@+id/txtView_hello"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginRight="30dp"
+        android:padding="10dp"
+        android:fontFamily="@font/recipekorea"
+        android:textColor="#49A5F6"
+        android:text="hello example"/>
+
+    <TextView
+        android:id="@+id/txtView_session"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:padding="20dp"
+        android:background="#49A5F6"
+        android:fontFamily="@font/recipekorea"
+        android:text="session textview example"
+        android:textColor="#ffffff"/>
+
+    <Button
+        android:id="@+id/btnStart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:background="#49A5F6"
+        android:fontFamily="@font/recipekorea"
+        android:text="Start Session"
+        android:textColor="#ffffff"/>
+    <Button
+        android:id="@+id/btnHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="30dp"
+        android:background="#49A5F6"
+        android:fontFamily="@font/recipekorea"
+        android:text="View History"
+        android:textColor="#ffffff"/>
+
+
+
 </LinearLayout>

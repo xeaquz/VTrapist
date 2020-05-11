@@ -102,27 +102,29 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().hide();
 
 
-//        DocumentReference docRef = db.collection("user").document(uid);
-//        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-//            @Override
-//            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-//                if (task.isSuccessful())
-//                {
-//                    DocumentSnapshot document = task.getResult();
-//                    if (document.exists()) {
-//                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
-//                        Intent intent = new Intent(getApplicationContext(), VideoList.class);
-//                        Log.d("dddddd", uid);
-//                        intent.putExtra("uid", uid);
-//                        startActivity(intent);
-//                    } else {
-//                        Log.d(TAG, "No such document");
-//                    }
-//                } else {
-//                    Log.d(TAG, "get failed with ", task.getException());
-//                }
-//            }
-//        });
+        DocumentReference docRef = db.collection("user").document(uid);
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful())
+                {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        Intent intent = new Intent(getApplicationContext(), Main.class);
+                        Log.d("dddddd", uid);
+                        intent.putExtra("uid", uid);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
+
 
         typeList = new ArrayList<>();
         typeList.add("height");

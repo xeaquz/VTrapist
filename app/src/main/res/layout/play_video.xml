@@ -6,55 +6,75 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp"
+        android:gravity="center_horizontal"
+        android:background="#ffffff">
 
         <view
             android:id="@+id/youtubeView"
             class="com.google.android.youtube.player.YouTubePlayerView"
             android:layout_width="345dp"
             android:layout_height="215dp"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
             android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_marginTop="16dp"/>
+            android:layout_marginTop="30dp"
+            android:layout_marginRight="8dp" />
 
-
-        <Button
-            android:id="@+id/youtubeBtnStart"
-            android:layout_below="@+id/youtubeView"
-            android:layout_toLeftOf="@+id/youtubeBtnStop"
-            android:layout_width="wrap_content"
+        <TableLayout
+            android:layout_width="360dp"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:text="Start"
-            />
+            android:gravity="center">
 
-        <Button
-            android:id="@+id/youtubeBtnStop"
-            android:layout_below="@+id/youtubeView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_margin="10dp"
-            android:text="Stop"/>
-        <Button
-            android:id="@+id/End"
-            android:layout_below="@+id/youtubeView"
-            android:layout_toRightOf="@+id/youtubeBtnStop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:text="End"/>
+            <TableRow android:layout_marginTop="10dp"
+                android:padding="5dp">
 
-        <com.github.mikephil.charting.charts.LineChart
-            android:id="@+id/chart"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_below="@+id/End"
-            />
-    </RelativeLayout>
+                <Button
+                    android:id="@+id/youtubeBtnStart"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:layout_weight="1"
+                    android:background="#ffffff"
+                    android:fontFamily="@font/recipekorea"
+                    android:text="Start"
+                    android:textColor="#49A5F6"
+                    android:stateListAnimator="@null" />
+
+                <Button
+                    android:id="@+id/youtubeBtnStop"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="3dp"
+                    android:layout_weight="1"
+                    android:background="#ffffff"
+                    android:fontFamily="@font/recipekorea"
+                    android:text="Stop"
+                    android:textColor="#49A5F6"
+                    android:stateListAnimator="@null"/>
+
+                <Button
+                    android:id="@+id/End"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_margin="3dp"
+                    android:background="#ffffff"
+                    android:fontFamily="@font/recipekorea"
+                    android:text="End"
+                    android:textColor="#49A5F6"
+                    android:stateListAnimator="@null"/>
+            </TableRow>
+
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/chart"
+                android:layout_width="match_parent"
+                android:layout_height="200dp" />
+
+        </TableLayout>
+
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,7 +23,7 @@
             android:fontFamily="@font/recipekorea"
             android:text="VTrapist"
             android:textSize="50dp"
-            android:textColor="#ffffff"></TextView>
+            android:textColor="#ffffff"/>
 
         <TableLayout
             android:layout_width="350dp"
@@ -111,7 +111,7 @@
                     android:layout_weight="3"
                     android:layout_marginTop="20dp"
                     android:layout_marginRight="15dp"
-                    android:fontFamily="@font/recipekorea"></Spinner>
+                    android:fontFamily="@font/recipekorea"/>
             </TableRow>
 
             <TableRow>

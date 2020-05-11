@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -68,6 +69,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.apache.http.HttpEntity;
@@ -87,7 +89,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     public static final String API_KEY = "AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI";
 
     // * 블루투스 관련 * //
-    private TextView status; // 연결됐는지 안됐는지 상태창
     private Button btnConnect, btnSensor;
 
     private Dialog dialog; // 블루투스 창
@@ -137,6 +138,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     private String sessionId;
     private String heartId;
 
+    private int playStatus = 0;
     private Integer flag = 0;
     private Timer timer = new Timer();
     TimerTask TT = new TimerTask() {
@@ -190,6 +192,47 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             @Override
             public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
                 youTubePlayer.cueVideo(VIDEO_ID);
+
+                btnConnect.setOnClickListener(new View.OnClickListener(){
+                    public void onClick(View view){
+                        if(playStatus == 0) { // if not connected
+                            initBLE();
+                            btnConnect.setText("Start");
+                            playStatus = 1;
+                        }
+                        if(playStatus == 1) { // if connected and btn = 'start'
+                            sendMessage("start");
+                            youTubePlayer.play();
+                            duration = (int)youTubePlayer.getDurationMillis()/1000;
+                            Log.d("dddddd", Integer.toString(duration));
+                            SensorOnResume();
+
+                            if (flag == 0) {//first start
+                                timer.schedule(TT, 0, 100);
+                                btnConnect.setText("Stop");
+                                playStatus = 2;
+                            }
+                            else {//restart
+                                tempTask();
+                                btnConnect.setText("Stop");
+                                playStatus = 2;
+                            }
+                        }
+                        if(playStatus == 2) { // if connected and btn = 'stop'
+                            sendMessage("stop");
+
+                            youTubePlayer.pause();
+                            SensorOnPause();
+                            timer.cancel();
+                            flag = 1;
+
+                            btnConnect.setText("Start");
+                            playStatus = 1;
+                        }
+
+                    }
+                });
+
 
                 btnStart.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -321,11 +364,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         }
 
         // 블루투스 연결 창 보여주기
-        btnConnect.setOnClickListener(new View.OnClickListener(){
-            public void onClick(View view){
-                initBLE();
-            }
-        });
 
         //chat adapter 설정
         chatMessages = new ArrayList<>();
@@ -344,14 +382,17 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                     switch (msg.arg1) {
                         case ChatController.STATE_CONNECTED:
                             setStatus("Connected to: " + connectingDevice.getName());
-                            btnConnect.setEnabled(false);
+                            btnConnect.setText("Start");
+                            btnConnect.setEnabled(true);
                             break;
                         case ChatController.STATE_CONNECTING:
                             setStatus("Connecting...");
+                            btnConnect.setText("Connecting...");
                             btnConnect.setEnabled(false);
                             break;
                         case ChatController.STATE_LISTEN:
                             setStatus("Listen...");
+                            btnConnect.setEnabled(true);
                             break;
                         case ChatController.STATE_NONE:
                             setStatus("Not connected");
@@ -476,7 +517,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     }
 
     private void setStatus(String s) {
-        status.setText(s);
     }
 
     private void connectToDevice(String deviceAddress){
@@ -486,8 +526,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     }
 
     private void findViewsByIds(){
-        status = (TextView) findViewById(R.id.status);
-        btnConnect = (Button) findViewById(R.id.btn_connect);
+        btnConnect = (Button) findViewById(R.id.btnConnect);
 
         btnStart = findViewById(R.id.youtubeBtnStart);
         btnStop = findViewById(R.id.youtubeBtnStop);
@@ -564,7 +603,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             Log.d("dddddd", message);
             byte[] send = message.getBytes();
             chatController.write(send);
-            status.append(send.toString());
         }
     }
 
