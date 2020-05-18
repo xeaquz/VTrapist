@@ -151,12 +151,12 @@ public class PlayRecord extends YouTubeBaseActivity {
         };
 
 
-        btnStart = findViewById(R.id.youtubeBtnStart);
-        btnStop = findViewById(R.id.youtubeBtnStop);
+        btnStart = findViewById(R.id.btnStart);
+        btnStop = findViewById(R.id.btnStop);
         youTubeView = findViewById(R.id.youtubeView);
 
         heart=(TextView)findViewById(R.id.heart);
-        end=(Button)findViewById(R.id.End);
+        end=(Button)findViewById(R.id.btnEnd);
         lineChart=findViewById(R.id.chart);
 
 

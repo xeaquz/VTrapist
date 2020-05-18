@@ -138,7 +138,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     private String sessionId;
     private String heartId;
 
-    private int playStatus = 0;
     private Integer flag = 0;
     private Timer timer = new Timer();
     TimerTask TT = new TimerTask() {
@@ -195,41 +194,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
 
                 btnConnect.setOnClickListener(new View.OnClickListener(){
                     public void onClick(View view){
-                        if(playStatus == 0) { // if not connected
-                            initBLE();
-                            btnConnect.setText("Start");
-                            playStatus = 1;
-                        }
-                        if(playStatus == 1) { // if connected and btn = 'start'
-                            sendMessage("start");
-                            youTubePlayer.play();
-                            duration = (int)youTubePlayer.getDurationMillis()/1000;
-                            Log.d("dddddd", Integer.toString(duration));
-                            SensorOnResume();
-
-                            if (flag == 0) {//first start
-                                timer.schedule(TT, 0, 100);
-                                btnConnect.setText("Stop");
-                                playStatus = 2;
-                            }
-                            else {//restart
-                                tempTask();
-                                btnConnect.setText("Stop");
-                                playStatus = 2;
-                            }
-                        }
-                        if(playStatus == 2) { // if connected and btn = 'stop'
-                            sendMessage("stop");
-
-                            youTubePlayer.pause();
-                            SensorOnPause();
-                            timer.cancel();
-                            flag = 1;
-
-                            btnConnect.setText("Start");
-                            playStatus = 1;
-                        }
-
+                        initBLE();
                     }
                 });
 
@@ -241,7 +206,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                         youTubePlayer.play();
                         duration = (int)youTubePlayer.getDurationMillis()/1000;
                         Log.d("dddddd", Integer.toString(duration));
-                        SensorOnResume();
 
                         if (flag == 0) //first start
                             timer.schedule(TT, 0, 100);
@@ -382,7 +346,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                     switch (msg.arg1) {
                         case ChatController.STATE_CONNECTED:
                             setStatus("Connected to: " + connectingDevice.getName());
-                            btnConnect.setText("Start");
                             btnConnect.setEnabled(true);
                             break;
                         case ChatController.STATE_CONNECTING:
@@ -392,11 +355,9 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                             break;
                         case ChatController.STATE_LISTEN:
                             setStatus("Listen...");
-                            btnConnect.setEnabled(true);
                             break;
                         case ChatController.STATE_NONE:
                             setStatus("Not connected");
-                            btnConnect.setEnabled(true);
                             break;
                     }
                     break;
@@ -526,13 +487,13 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     }
 
     private void findViewsByIds(){
-        btnConnect = (Button) findViewById(R.id.btnConnect);
 
-        btnStart = findViewById(R.id.youtubeBtnStart);
-        btnStop = findViewById(R.id.youtubeBtnStop);
+        btnConnect = findViewById(R.id.btnConnect);
+        btnStart = findViewById(R.id.btnStart);
+        btnStop = findViewById(R.id.btnStop);
         youTubeView = findViewById(R.id.youtubeView);
 
-        btnEnd = (Button) findViewById(R.id.End);
+        btnEnd = (Button) findViewById(R.id.btnEnd);
         lineChart = findViewById(R.id.chart);
 
 

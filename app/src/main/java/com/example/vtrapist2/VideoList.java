@@ -91,7 +91,7 @@ public class VideoList extends AppCompatActivity {
 
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
-
+                type = "height";
             }
         });
 

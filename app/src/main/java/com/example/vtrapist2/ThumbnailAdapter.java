@@ -2,6 +2,7 @@ package com.example.vtrapist2;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,10 +11,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubeThumbnailLoader;
 import com.google.android.youtube.player.YouTubeThumbnailView;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import static androidx.constraintlayout.widget.Constraints.TAG;
 
 
 public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.ThumbnailViewHolder> {
@@ -23,6 +33,8 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.Thum
 
     private String id;
     private String type;
+
+    Map<String, Object> data = new HashMap<>();
 
     private YouTubeThumbnailView youTubeThumbnailView;
     private YouTubeThumbnailLoader youTubeThumbnailLoader;
@@ -78,15 +90,39 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.Thum
         viewholder.youTubeThumbnailView.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view) {
-                Intent intent;
                 Context context = view.getContext();
                 VIDEO_ID = mList.get(position).toString();
-                intent = new Intent(context, PlayVideoSignal.class);
-                intent.putExtra("videoId", VIDEO_ID);
-                intent.putExtra("id", id);
-                intent.putExtra("type", type);
-                context.startActivity(intent);
-                //youTubePlayer.play();
+
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                DocumentReference docRef = db.collection("videos").document(VIDEO_ID);
+                docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful())
+                        {
+                            DocumentSnapshot document = task.getResult();
+                            if (document.exists()) {
+                                Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                                data = document.getData();
+                                type = data.get("type").toString();
+
+                                Intent intent = new Intent(context, PlayVideoSignal.class);
+                                intent.putExtra("videoId", VIDEO_ID);
+                                intent.putExtra("id", id);
+                                intent.putExtra("type", type);
+                                context.startActivity(intent);
+                                //youTubePlayer.play();
+
+                            } else {
+                                Log.d(TAG, "No such document");
+                            }
+                        } else {
+                            Log.d(TAG, "get failed with ", task.getException());
+                        }
+                    }
+                });
+
+
 
             }});
     }

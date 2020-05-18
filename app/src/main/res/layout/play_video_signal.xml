@@ -9,106 +9,86 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp"
+        android:layout_margin="20dp"
+        android:gravity="center_horizontal"
+        android:background="#ffffff">
 
         <TableLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center">
+            android:gravity="center">
 
             <TableRow>
                 <Button
                     android:id="@+id/btnConnect"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="2"
-                    android:layout_marginTop="10dp"
+                    android:layout_weight="1"
+                    android:layout_margin="10dp"
                     android:fontFamily="@font/recipekorea"
-                    android:background="#ffffff"
-                    android:textColor="#49A5F6"
+                    android:background="#70BCFF"
+                    android:textColor="#ffffff"
                     android:text="Connect to watch" />
 
+            </TableRow>
+
+            <TableRow>
+
+                <Button
+                    android:id="@+id/btnStart"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="5dp"
+                    android:fontFamily="@font/recipekorea"
+                    android:background="#70BCFF"
+                    android:textColor="#ffffff"
+                    android:text="Start"
+                    />
+
+                <Button
+                    android:id="@+id/btnStop"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp"
+                    android:fontFamily="@font/recipekorea"
+                    android:background="#70BCFF"
+                    android:textColor="#ffffff"
+                    android:text="Stop"/>
                 <Button
                     android:id="@+id/btnEnd"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginTop="10dp"
-                    android:background="#ffffff"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="10dp"
                     android:fontFamily="@font/recipekorea"
-                    android:text="End" />
+                    android:background="#70BCFF"
+                    android:textColor="#ffffff"
+                    android:text="End"/>
             </TableRow>
 
-            <TableRow>
-                <view
-                    android:id="@+id/youtubeView"
-                    class="com.google.android.youtube.player.YouTubePlayerView"
-                    android:layout_width="345dp"
-                    android:layout_height="215dp"
-                    android:layout_alignParentTop="true"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginLeft="8dp"
-                    android:layout_marginRight="8dp"
-                    android:layout_marginTop="16dp"/>
-            </TableRow>
+            <view
+                android:id="@+id/youtubeView"
+                class="com.google.android.youtube.player.YouTubePlayerView"
+                android:layout_width="345dp"
+                android:layout_height="215dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="8dp" />
 
-            <TableRow>
-                <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/chart"
-                    android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:layout_below="@+id/End"
-                    />
-            </TableRow>
-
-            <ScrollView>
-                <TextView
-                    android:id="@+id/txtView_analyze"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/recipekorea"
-                    android:text="Analyze Example">
-
-                </TextView>
-            </ScrollView>
-
-
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/chart"
+                android:layout_width="match_parent"
+                android:layout_height="200dp" />
 
         </TableLayout>
-
-
-
-
-
-
-
-        <Button
-            android:id="@+id/youtubeBtnStart"
-            android:layout_below="@+id/youtubeView"
-            android:layout_toLeftOf="@+id/youtubeBtnStop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:text="Start"
-            />
-
-        <Button
-            android:id="@+id/youtubeBtnStop"
-            android:layout_below="@+id/youtubeView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_margin="10dp"
-            android:text="Stop"/>
-        <Button
-            android:id="@+id/End"
-            android:layout_below="@+id/youtubeView"
-            android:layout_toRightOf="@+id/youtubeBtnStop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:text="End"/>
-
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

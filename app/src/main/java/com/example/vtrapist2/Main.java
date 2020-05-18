@@ -140,6 +140,7 @@ public class Main extends AppCompatActivity {
 
     }
 
+    // compare date data to show latest history
     public void compareDate() {
 
         int yy1, mm1, dd1, yy2, mm2, dd2;

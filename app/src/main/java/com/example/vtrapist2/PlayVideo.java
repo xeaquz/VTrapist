@@ -121,14 +121,14 @@ public class PlayVideo extends YouTubeBaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.play_video);
 
-        btnStart = findViewById(R.id.youtubeBtnStart);
-        btnStop = findViewById(R.id.youtubeBtnStop);
+        btnStart = findViewById(R.id.btnStart);
+        btnStop = findViewById(R.id.btnStop);
         youTubeView = findViewById(R.id.youtubeView);
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         heartLs = new heartListener();
 
-        end = (Button) findViewById(R.id.End);
+        end = (Button) findViewById(R.id.btnEnd);
         lineChart = findViewById(R.id.chart);
 
         Intent intent = getIntent();

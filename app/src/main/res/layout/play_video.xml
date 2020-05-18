@@ -33,7 +33,7 @@
                 android:padding="5dp">
 
                 <Button
-                    android:id="@+id/youtubeBtnStart"
+                    android:id="@+id/btnStart"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_margin="3dp"
@@ -45,7 +45,7 @@
                     android:stateListAnimator="@null" />
 
                 <Button
-                    android:id="@+id/youtubeBtnStop"
+                    android:id="@+id/btnStop"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_margin="3dp"
@@ -57,7 +57,7 @@
                     android:stateListAnimator="@null"/>
 
                 <Button
-                    android:id="@+id/End"
+                    android:id="@+id/btnEnd"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
