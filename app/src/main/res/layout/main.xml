@@ -22,10 +22,10 @@
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
         android:padding="20dp"
-        android:background="#49A5F6"
+        android:background="#E2F1FF"
         android:fontFamily="@font/recipekorea"
         android:text="session textview example"
-        android:textColor="#ffffff"/>
+        android:textColor="#858585"/>
 
     <Button
         android:id="@+id/btnStart"
