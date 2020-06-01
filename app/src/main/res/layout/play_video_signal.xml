@@ -23,14 +23,30 @@
 
             <TableRow>
                 <Button
-                    android:id="@+id/btnConnect"
+                    android:id="@+id/btnConnectP"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="35dp"
                     android:layout_weight="1"
-                    android:layout_margin="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="5dp"
                     android:fontFamily="@font/recipekorea"
                     android:background="#70BCFF"
                     android:textColor="#ffffff"
+                    android:textSize="12dp"
+                    android:text="Connect to phone" />
+
+                <Button
+                    android:id="@+id/btnConnectW"
+                    android:layout_width="0dp"
+                    android:layout_height="35dp"
+                    android:layout_weight="1"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginBottom="10dp"
+                    android:fontFamily="@font/recipekorea"
+                    android:background="#70BCFF"
+                    android:textColor="#ffffff"
+                    android:textSize="12dp"
                     android:text="Connect to watch" />
 
             </TableRow>
@@ -40,10 +56,10 @@
                 <Button
                     android:id="@+id/btnStart"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="35dp"
                     android:layout_weight="1"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginRight="5dp"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="10dp"
                     android:fontFamily="@font/recipekorea"
                     android:background="#70BCFF"
                     android:textColor="#ffffff"
@@ -53,7 +69,7 @@
                 <Button
                     android:id="@+id/btnStop"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="35dp"
                     android:layout_weight="1"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"
@@ -64,7 +80,7 @@
                 <Button
                     android:id="@+id/btnEnd"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="35dp"
                     android:layout_weight="1"
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="10dp"

@@ -89,7 +89,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     public static final String API_KEY = "AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI";
 
     // * 블루투스 관련 * //
-    private Button btnConnect, btnSensor;
+    private Button btnConnectW, btnConnectP;
 
     private Dialog dialog; // 블루투스 창
 
@@ -107,6 +107,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     private static final int REQUEST_ENABLE_BLUETOOTH = 1;
     private ArrayAdapter<String> discoveredDevicesAdapter;
     private ChatController chatController;
+    private ChatController2 chatController2;
     private BluetoothDevice connectingDevice;
 
     private YouTubePlayerView youTubeView;
@@ -138,7 +139,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     private String sessionId;
     private String heartId;
 
-    private Integer flag = 0;
+    private Integer flag = 0, flag_pw = 0;
     private Timer timer = new Timer();
     TimerTask TT = new TimerTask() {
         @Override
@@ -148,8 +149,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
 
         }
     };
-
-    private static final int MY_PERMISSIONS_REQUEST_BODY_SENSORS = 1;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -166,8 +165,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
 
         // set sensor
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        heartLs = new heartListener();
-        checkPermission();
 
         // get current time
         SimpleDateFormat fm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -192,8 +189,15 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer youTubePlayer, boolean b) {
                 youTubePlayer.cueVideo(VIDEO_ID);
 
-                btnConnect.setOnClickListener(new View.OnClickListener(){
+                btnConnectW.setOnClickListener(new View.OnClickListener(){
                     public void onClick(View view){
+                        flag_pw = 1;
+                        initBLE();
+                    }
+                });
+                btnConnectP.setOnClickListener(new View.OnClickListener(){
+                    public void onClick(View view){
+                        flag_pw = 0;
                         initBLE();
                     }
                 });
@@ -219,7 +223,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                         sendMessage("stop");
 
                         youTubePlayer.pause();
-                        SensorOnPause();
                         timer.cancel();
                         flag = 1;
                     }
@@ -346,12 +349,12 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                     switch (msg.arg1) {
                         case ChatController.STATE_CONNECTED:
                             setStatus("Connected to: " + connectingDevice.getName());
-                            btnConnect.setEnabled(true);
+                            sendMessage(VIDEO_ID);
+                            btnConnectW.setEnabled(true);
                             break;
                         case ChatController.STATE_CONNECTING:
                             setStatus("Connecting...");
-                            btnConnect.setText("Connecting...");
-                            btnConnect.setEnabled(false);
+                            btnConnectW.setEnabled(false);
                             break;
                         case ChatController.STATE_LISTEN:
                             setStatus("Listen...");
@@ -359,6 +362,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                         case ChatController.STATE_NONE:
                             setStatus("Not connected");
                             break;
+
                     }
                     break;
                 case MESSAGE_WRITE:
@@ -375,7 +379,62 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                     chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
                     chatAdapter.notifyDataSetChanged();
                     curSignal = Float.parseFloat(readMessage);
-                    Toast.makeText(getApplicationContext(), readMessage, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), curSignal + "??" + readMessage, Toast.LENGTH_LONG).show();
+                    break;
+                case MESSAGE_DEVICE_OBJECT:
+                    connectingDevice = msg.getData().getParcelable(DEVICE_OBJECT);
+                    Toast.makeText(getApplicationContext(), "Connected to " + connectingDevice.getName(),
+                            Toast.LENGTH_SHORT).show();
+                    break;
+                case MESSAGE_TOAST:
+//                    Toast.makeText(getApplicationContext(), msg.getData().getString("toast"),
+//                            Toast.LENGTH_SHORT).show();
+                    break;
+            }
+            return false;
+        }
+    });
+
+    private Handler handler2 = new Handler(new Handler.Callback() {
+
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case ChatController.STATE_CONNECTED:
+                            setStatus("Connected to: " + connectingDevice.getName());
+                            sendMessage(VIDEO_ID);
+                            btnConnectW.setEnabled(true);
+                            break;
+                        case ChatController.STATE_CONNECTING:
+                            setStatus("Connecting...");
+                            btnConnectW.setEnabled(false);
+                            break;
+                        case ChatController.STATE_LISTEN:
+                            setStatus("Listen...");
+                            break;
+                        case ChatController.STATE_NONE:
+                            setStatus("Not connected");
+                            break;
+
+                    }
+                    break;
+                case MESSAGE_WRITE:
+                    byte[] writeBuf = (byte[]) msg.obj;
+
+                    String writeMessage = new String(writeBuf);
+                    chatMessages.add("Me: " + writeMessage);
+                    chatAdapter.notifyDataSetChanged();
+                    break;
+                case MESSAGE_READ:
+                    byte[] readBuf = (byte[]) msg.obj;
+
+                    String readMessage = new String(readBuf, 0, msg.arg1);
+                    chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
+                    chatAdapter.notifyDataSetChanged();
+                    curSignal = Float.parseFloat(readMessage);
+                    Toast.makeText(getApplicationContext(), curSignal + "??" + readMessage, Toast.LENGTH_LONG).show();
                     break;
                 case MESSAGE_DEVICE_OBJECT:
                     connectingDevice = msg.getData().getParcelable(DEVICE_OBJECT);
@@ -446,7 +505,10 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                 String info = ((TextView) view).getText().toString(); // 해당 기기의 이름과
                 String address = info.substring(info.length() - 17); // 주소를 얻어오기
 
-                connectToDevice(address);
+                if(flag_pw == 0)
+                    connectToDevice(address);
+                else
+                    connectToDevice2(address);
                 dialog.dismiss(); // Dialog 사라지게
             }
 
@@ -485,10 +547,15 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
         chatController.connect(device);
     }
-
+    private void connectToDevice2(String deviceAddress){
+        bluetoothAdapter.cancelDiscovery(); // Discovery 그만 하도록 하기
+        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
+        chatController2.connect(device);
+    }
     private void findViewsByIds(){
 
-        btnConnect = findViewById(R.id.btnConnect);
+        btnConnectW = findViewById(R.id.btnConnectW);
+        btnConnectP = findViewById(R.id.btnConnectP);
         btnStart = findViewById(R.id.btnStart);
         btnStop = findViewById(R.id.btnStop);
         youTubeView = findViewById(R.id.youtubeView);
@@ -503,7 +570,8 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         switch (requestCode) {
             case REQUEST_ENABLE_BLUETOOTH:
                 if (resultCode == Activity.RESULT_OK) {
-                    chatController = new ChatController(this, handler);
+                    if(flag_pw == 0) chatController = new ChatController(this, handler);
+                    else chatController2 = new ChatController2(this, handler2);
                 } else {
                     Toast.makeText(this, "Bluetooth still disabled, turn off application!", Toast.LENGTH_SHORT).show();
                     finish();
@@ -519,6 +587,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
         } else {
             chatController = new ChatController(this, handler);
+            chatController2 = new ChatController2(this, handler2);
         }
     }
 
@@ -531,6 +600,11 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                 chatController.start();
             }
         }
+        if (chatController2 != null) {
+            if (chatController2.getState() == ChatController2.STATE_NONE) {
+                chatController2.start();
+            }
+        }
     }
 
     @Override
@@ -538,6 +612,8 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         super.onDestroy();
         if (chatController != null)
             chatController.stop();
+        if (chatController2 != null)
+            chatController2.stop();
     }
 
     private final BroadcastReceiver discoveryFinishReceiver = new BroadcastReceiver() {
@@ -564,6 +640,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             Log.d("dddddd", message);
             byte[] send = message.getBytes();
             chatController.write(send);
+            chatController2.write(send);
         }
     }
 
@@ -638,89 +715,4 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         timer.schedule(task, 0, 100);
     }
 
-    //sensor----------------------------------------------------------------------------------------
-    private void checkPermission() {
-        if (checkSelfPermission(BODY_SENSORS)
-                != PackageManager.PERMISSION_GRANTED) {
-            if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                Toast.makeText(this, "BODY_SENSORS", Toast.LENGTH_SHORT).show();
-            }
-            requestPermissions(new String[]{BODY_SENSORS},
-                    MY_PERMISSIONS_REQUEST_BODY_SENSORS);
-            // MY_PERMISSION_REQUEST_STORAGE is an
-            // app-defined int constant
-        } else {
-            // 다음 부분은 항상 허용일 경우에 해당이 됩니다.
-            mHeartRate = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-            // getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
-            // heart rate monitor 얻어오기
-            // android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
-            if (mHeartRate == null) {
-                Toast.makeText(this, "No Heart Rate Sensor", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Yes Heart Rate Sensor", Toast.LENGTH_SHORT).show();
-            }
-            //SensorOnResume();
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[]
-            grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_BODY_SENSORS:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "BODY_SENSORS Granted", Toast.LENGTH_SHORT).show();
-                    mHeartRate = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
-                    // getDefaultSensor(int type) - 주어진 타입에 대한 디폴트 센서 얻기
-                    // heart rate monitor 얻어오기
-                    // android.permission.BODY_SENSORS 없다면 detDefaultSensor 에 의해 값 안 얻어짐.
-                    if (mHeartRate == null) {
-                        Toast.makeText(this, "No Heart Rate Sensor", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(this, "Yes Heart Rate Sensor", Toast.LENGTH_SHORT).show();
-                    }
-                    //SensorOnResume();
-                    // permission was granted
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                break;
-        }
-    }
-
-    protected void SensorOnResume() {
-        //super.onResume(); // 시작
-        if (mSensorManager.registerListener(heartLs, mHeartRate,
-                SensorManager.SENSOR_DELAY_UI)) {
-            Toast.makeText(this, "Register Listener", Toast.LENGTH_SHORT).show();
-        }
-        Toast.makeText(this, "Heart Rate Sensor Resume...", Toast.LENGTH_SHORT).show();
-    }
-
-    protected void SensorOnPause() {
-        //super.onPause(); // 멈추기
-        mSensorManager.unregisterListener(heartLs); // 등록한 listener 해제
-        Toast.makeText(this, "Heart Rate Sensor Paused...", Toast.LENGTH_SHORT).show();
-    }
-
-    private class heartListener implements SensorEventListener {
-        // 센서 값이 변할 때 이벤트 발생
-        // 센서 하나만 이용하므로 values[0]
-        // 여러 개의 센서 이용시 values[0~n]
-        public void onSensorChanged(SensorEvent event) {
-            float value = event.values[0];
-
-            curSignal = value;
-//            addEntry(value);
-
-//            heart.setText(heart.getText().toString() + String.format("%.2f", value));
-        }
-
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        }
-    }
 }
