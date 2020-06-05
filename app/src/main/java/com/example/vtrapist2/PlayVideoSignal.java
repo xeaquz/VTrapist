@@ -379,7 +379,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                     chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
                     chatAdapter.notifyDataSetChanged();
                     curSignal = Float.parseFloat(readMessage);
-                    Toast.makeText(getApplicationContext(), curSignal + "??" + readMessage, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), curSignal+" ", Toast.LENGTH_LONG).show();
                     break;
                 case MESSAGE_DEVICE_OBJECT:
                     connectingDevice = msg.getData().getParcelable(DEVICE_OBJECT);
