@@ -44,6 +44,7 @@ public class Main extends AppCompatActivity {
     private TextView txtView_session;
     private Button btnStart;
     private Button btnHistory;
+    private Button btnSaveTimestamp;
 
     Map<String, Object> data = new HashMap<>();
 
@@ -57,6 +58,7 @@ public class Main extends AppCompatActivity {
         txtView_session = findViewById(R.id.txtView_session);
         btnStart = findViewById(R.id.btnStart);
         btnHistory = findViewById(R.id.btnHistory);
+        btnSaveTimestamp = findViewById(R.id.btnSaveTimestamp);
         mySwipeRefreshLayout = findViewById(R.id.refresh_layout);
 
         // set action bar
@@ -119,6 +121,14 @@ public class Main extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), RecordList.class);
                 intent.putExtra("uid", uid);
+                startActivity(intent);
+            }
+        });
+
+        btnSaveTimestamp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(), SaveTimestamp.class);
                 startActivity(intent);
             }
         });

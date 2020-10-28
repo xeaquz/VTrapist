@@ -37,13 +37,16 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.BufferedReader;
@@ -56,6 +59,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -83,6 +87,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import static android.Manifest.permission.BODY_SENSORS;
+import static android.content.ContentValues.TAG;
 
 public class PlayVideoSignal extends YouTubeBaseActivity {
     private static final int RECOVERY_REQUEST = 1;
@@ -131,6 +136,11 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     private float samplingRate_a;
     private int duration;
 
+    private Object timestamp = new ArrayList<>();
+    private Map<String, Object> tempData = new HashMap<>();
+    private String[] splitData;
+    private ArrayList<Integer> stamp = new ArrayList<>();
+
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private Map<Object, Object> record = new HashMap<>();
     private Map<Object, Object> session = new HashMap<>();
@@ -154,6 +164,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.play_video_signal);
 
+
         findViewsByIds();
         connectBLE();
 
@@ -163,6 +174,9 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         USER_ID = intent.getExtras().getString("id");
         type = intent.getExtras().getString("type");
 
+        getTimestamp();
+
+        Log.d("dddddd1", VIDEO_ID);
         // set sensor
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
@@ -171,6 +185,8 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         Date time = new Date();
         timeStarted = fm.format(time);
 
+
+
         // graph
         XAxis xAxis = lineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -178,10 +194,12 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         xAxis.setDrawGridLines(false);
 
         YAxis rightAxis = lineChart.getAxisRight();
-        rightAxis.setEnabled(false);
+        rightAxis.setEnabled(true);
 
         LineData data = new LineData();
         lineChart.setData(data);
+
+        LineDataSet data2;
 
         // youtube
         listener = new YouTubePlayer.OnInitializedListener() {
@@ -316,6 +334,39 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         youTubeView.initialize("AIzaSyBY9yA9muDZwvNjX2_KEHYxzVR7DPDgUXI", listener);
     }
 
+
+    public void getTimestamp() {
+        DocumentReference docRef = db.collection("videos").document(VIDEO_ID);
+        docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                        tempData = document.getData();
+                        timestamp = tempData.get("timestamp");
+
+                        String sData = timestamp.toString();
+
+                        // split data to array
+                        sData = sData.substring(1, sData.lastIndexOf("]"));
+                        splitData = sData.split(",");
+                        for(int i = 0; i < splitData.length; i++) {
+                            stamp.add((int)Float.parseFloat(splitData[i])/100);
+                        }
+                        Log.d("dddddd", timestamp.toString());
+
+                    } else {
+                        Log.d(TAG, "No such document");
+                    }
+                } else {
+                    Log.d(TAG, "get failed with ", task.getException());
+                }
+            }
+        });
+    }
+
     public void connectBLE() {
         // support BLE : 기기에서 블루투스를 지원하는지 확인
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -376,10 +427,17 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                     byte[] readBuf = (byte[]) msg.obj;
 
                     String readMessage = new String(readBuf, 0, msg.arg1);
-                    chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
-                    chatAdapter.notifyDataSetChanged();
-                    curSignal = Float.parseFloat(readMessage);
-                    Toast.makeText(getApplicationContext(), curSignal+" ", Toast.LENGTH_LONG).show();
+//                    chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
+//                    chatAdapter.notifyDataSetChanged();
+
+                    String sigType, tempSig;
+                    sigType = readMessage.substring(0, 1);
+                    tempSig = readMessage.substring(1);
+
+                    BigDecimal tempSig2 = new BigDecimal(tempSig);
+                    curSignal = tempSig2.floatValue();
+
+                    Toast.makeText(getApplicationContext(), curSignal+" ", Toast.LENGTH_SHORT).show();
                     break;
                 case MESSAGE_DEVICE_OBJECT:
                     connectingDevice = msg.getData().getParcelable(DEVICE_OBJECT);
