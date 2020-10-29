@@ -112,7 +112,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
     private static final int REQUEST_ENABLE_BLUETOOTH = 1;
     private ArrayAdapter<String> discoveredDevicesAdapter;
     private ChatController chatController;
-    private ChatController2 chatController2;
     private BluetoothDevice connectingDevice;
 
     private YouTubePlayerView youTubeView;
@@ -565,8 +564,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
 
                 if(flag_pw == 0)
                     connectToDevice(address);
-                else
-                    connectToDevice2(address);
                 dialog.dismiss(); // Dialog 사라지게
             }
 
@@ -605,11 +602,7 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
         chatController.connect(device);
     }
-    private void connectToDevice2(String deviceAddress){
-        bluetoothAdapter.cancelDiscovery(); // Discovery 그만 하도록 하기
-        BluetoothDevice device = bluetoothAdapter.getRemoteDevice(deviceAddress);
-        chatController2.connect(device);
-    }
+
     private void findViewsByIds(){
 
         btnConnectW = findViewById(R.id.btnConnectW);
@@ -629,7 +622,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             case REQUEST_ENABLE_BLUETOOTH:
                 if (resultCode == Activity.RESULT_OK) {
                     if(flag_pw == 0) chatController = new ChatController(this, handler);
-                    else chatController2 = new ChatController2(this, handler2);
                 } else {
                     Toast.makeText(this, "Bluetooth still disabled, turn off application!", Toast.LENGTH_SHORT).show();
                     finish();
@@ -645,7 +637,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             startActivityForResult(enableIntent, REQUEST_ENABLE_BLUETOOTH);
         } else {
             chatController = new ChatController(this, handler);
-            chatController2 = new ChatController2(this, handler2);
         }
     }
 
@@ -658,11 +649,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                 chatController.start();
             }
         }
-        if (chatController2 != null) {
-            if (chatController2.getState() == ChatController2.STATE_NONE) {
-                chatController2.start();
-            }
-        }
     }
 
     @Override
@@ -670,8 +656,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         super.onDestroy();
         if (chatController != null)
             chatController.stop();
-        if (chatController2 != null)
-            chatController2.stop();
     }
 
     private final BroadcastReceiver discoveryFinishReceiver = new BroadcastReceiver() {
@@ -698,7 +682,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             Log.d("dddddd", message);
             byte[] send = message.getBytes();
             chatController.write(send);
-            chatController2.write(send);
         }
     }
 
