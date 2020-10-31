@@ -452,64 +452,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         }
     });
 
-    private Handler handler2 = new Handler(new Handler.Callback() {
-
-        @Override
-        public boolean handleMessage(Message msg) {
-            switch (msg.what) {
-                case MESSAGE_STATE_CHANGE:
-                    switch (msg.arg1) {
-                        case ChatController.STATE_CONNECTED:
-                            setStatus("Connected to: " + connectingDevice.getName());
-                            sendMessage(VIDEO_ID);
-                            btnConnectW.setEnabled(true);
-                            break;
-                        case ChatController.STATE_CONNECTING:
-                            setStatus("Connecting...");
-                            btnConnectW.setEnabled(false);
-                            break;
-                        case ChatController.STATE_LISTEN:
-                            setStatus("Listen...");
-                            break;
-                        case ChatController.STATE_NONE:
-                            setStatus("Not connected");
-                            break;
-
-                    }
-                    break;
-                case MESSAGE_WRITE:
-                    byte[] writeBuf = (byte[]) msg.obj;
-
-                    String writeMessage = new String(writeBuf);
-                    chatMessages.add("Me: " + writeMessage);
-                    chatAdapter.notifyDataSetChanged();
-                    break;
-                case MESSAGE_READ:
-                    byte[] readBuf = (byte[]) msg.obj;
-
-                    String readMessage = new String(readBuf, 0, msg.arg1);
-                    chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
-                    chatAdapter.notifyDataSetChanged();
-                    curSignal = Float.parseFloat(readMessage);
-                    Toast.makeText(getApplicationContext(), curSignal + "??" + readMessage, Toast.LENGTH_LONG).show();
-                    break;
-                case MESSAGE_DEVICE_OBJECT:
-                    connectingDevice = msg.getData().getParcelable(DEVICE_OBJECT);
-                    Toast.makeText(getApplicationContext(), "Connected to " + connectingDevice.getName(),
-                            Toast.LENGTH_SHORT).show();
-                    break;
-                case MESSAGE_TOAST:
-//                    Toast.makeText(getApplicationContext(), msg.getData().getString("toast"),
-//                            Toast.LENGTH_SHORT).show();
-                    break;
-            }
-            return false;
-        }
-    });
-
-
-
-
     /*
      * 블루투스 초기화
      * */
