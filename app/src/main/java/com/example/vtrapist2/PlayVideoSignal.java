@@ -61,6 +61,8 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.HttpURLConnection;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,7 +156,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         @Override
         public void run() {
             addEntry(curSignal);
-            signal.add(curSignal);
 
         }
     };
@@ -424,17 +425,33 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
                     break;
                 case MESSAGE_READ:
                     byte[] readBuf = (byte[]) msg.obj;
-
+                    float sigTmp = 0;
                     String readMessage = new String(readBuf, 0, msg.arg1);
+
+                    Log.d("dddddd", readMessage);
+
+                    if(readBuf[0] == (byte)0) {
+                        byte[] tmp = new byte[4];
+                        for(int i = 0; i < 8; i++) {
+                            for(int j = 0; j < 4; j++) {
+                                tmp[j] = readBuf[1+4*i+j];
+                            }
+                            sigTmp = byteToFloat(tmp, ByteOrder.BIG_ENDIAN);
+                            Log.d("dddddd", Float.toString(sigTmp));
+                            signal.add(sigTmp);
+                        }
+                    }
+
+                    curSignal = sigTmp;
+
 //                    chatMessages.add(connectingDevice.getName() + ":  " + readMessage);
 //                    chatAdapter.notifyDataSetChanged();
 
-                    String sigType, tempSig;
-                    sigType = readMessage.substring(0, 1);
-                    tempSig = readMessage.substring(1);
-
-                    BigDecimal tempSig2 = new BigDecimal(tempSig);
-                    curSignal = tempSig2.floatValue();
+//                    String sigType, tempSig;
+//                    sigType = readMessage.substring(0, 1);
+//                    tempSig = readMessage.substring(1);
+//
+//                    BigDecimal tempSig2 = new BigDecimal(tempSig);
 
                     Toast.makeText(getApplicationContext(), curSignal+" ", Toast.LENGTH_SHORT).show();
                     break;
@@ -618,6 +635,15 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
         }
     };
 
+    private static float byteToFloat(byte[] bytes, ByteOrder order) {
+        ByteBuffer buff = ByteBuffer.allocate(Float.SIZE/8);
+        buff.order();
+
+        buff.put(bytes);
+        buff.flip();
+        return buff.getFloat();
+    }
+
     private void sendMessage(String message) {
 
         if (message.length() > 0) {
@@ -691,7 +717,6 @@ public class PlayVideoSignal extends YouTubeBaseActivity {
             @Override
             public void run() {
                 addEntry(curSignal);
-                signal.add(curSignal);
             }
         };
         timer = new Timer();
